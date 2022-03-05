@@ -1,0 +1,13 @@
+# Elimina un item o varios por el nivel de su encantamiento.
+on click:
+	if player's held item is sword:
+		set {_Level} to "%level of unbreaking of the player's tool%" parsed as number
+		if {_Level} = 70:
+			set {_LocX} to x-coordinate of player 
+			set {_LocY} to y-coordinate of player 
+			set {_LocZ} to z-coordinate of player
+			set {_world} to "%world of player%"
+			set {_Location} to "[Loc: %{_LocX}% %{_LocY}% %{_LocZ}%] [World: %{_world}%]"
+			log "%player% > %{_Location}%" in file "unbreaking-70.log"
+			remove player's held item from player's inventory
+			# send "&c&lUps! &fHemos eliminado tu Espada con &5Unbreaking 70&f de tu inventario."

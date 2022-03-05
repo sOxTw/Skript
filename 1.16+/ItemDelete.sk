@@ -1,0 +1,25 @@
+every 0.5 second: # Medio segundo de tiempo.
+	loop all players: # Detecta a todos los jugadores en linea.
+	
+		loop all items in the loop-player's inventory: # Detecta todos los items de todos los jugadores en linea, por eso uso "loop-player's".
+			
+			set {_listItems::*} to loop-item # Genera una lista de todos los items encontrados en cada jugador.
+			
+			loop {_listItems::*}: # Los separa por "," y al ultimo por "and".
+				
+				if loop-value-3 is ancient debris or netherite block: # Busco dentro del resultado del 3er Loop. Si existe algunos de los materiales a eliminar.
+				
+					set {_item} to "%loop-value-3%" in upper case # Seteo una variable temporal con el valor del Loop-3 en tipo texto para modificarlo y darle UPPERCASE.
+					
+					replace "NETHERITE BLOCKS" with "NETHERITE_BLOCKS" in {_item} # Hago que los espacios entre el nombre el item se reemplacen por "_".
+					replace "ANCIENT DEBRIS" with "ANCIENT_DEBRIS" in {_item} # Hago que los espacios entre el nombre el item se reemplacen por "_".
+				
+					set {_slot} to "%loop-item%" # Tomo el "idenx" de donde se encuentra el item dentro del slot del jugador y lo guardo en una variable temporal. Este idenx contiene lo siguiente: "inventory slot (Numero de slot) of (Nombre del jugador)".
+					
+					replace "inventory slot " with "" in {_slot} # Remuevo parte del texto en este caso quedaria: "(Numero de slot) of (Nombre del jugador)"
+					
+					replace " of %loop-player%" with "" in {_slot} # Remuevo parte del texto en este caso quedaria: "(Numero de slot)"
+					
+					remove loop-value-3 from loop-player's inventory # Remueveo el item del inventario.
+					
+					log "%loop-player% » Item: %{_item}% | Slot: %{_slot}%" in file "LogsItemDelete.log" # Genero el log dentro de "Skript/logs/logsitemdelete.log"

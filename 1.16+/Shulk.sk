@@ -1,0 +1,38 @@
+function InvCheck(list: objects, check: object) :: boolean:
+    loop {_list::*}:
+        if loop-value is {_check}:
+            return true
+    return false
+				
+on inventory open:
+	
+	if "%type of event-inventory%" is "shulker box inventory":
+	
+		loop all items in player's inventory:
+			
+			set {_Items::*} to lore of loop-item
+			
+		InvCheck({_Items::*}, "Este item No se debe regalar") is true:
+		
+			if {shulk::%player's uuid%} is not set:
+			
+				cancel event
+				send "" and "&4&lHey! %player's display name% &c¡Evita la perdida de items importantes, deja tus items &6&lVIPs&c en un cofre normal privatizado!" and "&fNo puedes usar &b&nShulkerBox&r &fteniendo items &6&lVIPs&f en tu inventario." and "" to player
+				
+			else:
+				stop
+				
+command /shulk:
+	trigger:
+		if player has permission "shulker.open":
+			if {shulk::%player's uuid%} is not set:
+			
+				send "&e&l[SulkSk]: &a&nPoder activado"
+				set {shulk::%player's uuid%} to true
+				
+			else:
+				
+				delete {shulk::%player's uuid%}
+				send "&e&l[SulkSk]: &c&nPoder desactivado"
+			
+			

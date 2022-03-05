@@ -1,0 +1,61 @@
+options:
+	DPrefix: &e&l[DEBUG SK]: &7&o
+
+function contains(list: objects, check: object) :: boolean:
+    loop {_list::*}:
+        if loop-value is {_check}:
+            return true
+    return false
+
+function LogItem(p: player, drop: text, info: text, data: text, type: text):
+	replace "Este item No se debe regalar, ni vender es ilegal" with "" in {_info}
+	replace " and " with "" in {_info}
+	replace "Dueño" with "D:" in {_info}
+	replace "Rango:" with "R:" in {_info}
+	replace "Fecha:" with "F: " in {_info}
+	set {_var1} to {_drop} in upper case
+	set {_var2} to {_data} in upper case
+	
+	log "[%{_type}%] %{_p}% > %{_var1}% | Ench: %{_var2}% | Lore: %{_info}%" in file "vip.log"
+		
+	if {debug} is set:
+		send "{@DPrefix} &f[%{_type}%] %{_p}% > Item: %{_var1}% | Ench: %{_var2}% | Lore: %{_info}%" to {_p}
+	
+	
+on drop:
+
+	set {_Detect::*} to lore of event-item
+	
+	contains({_Detect::3}, "Este item No se debe regalar") is true:
+	
+		if enchantments of event-item is set:
+			set {_Drop} to "%enchantments of event-item%"
+		
+			replace " and" with "," in {_Drop}
+		
+			LogItem(player, "%event-item%", "%lore of event-item%", {_Drop}, "DROP")
+		
+			
+		else:
+			
+			LogItem(player, "%event-item%", "%lore of event-item%", "X", "DROP")
+			
+on pickup:
+
+	set {_Detect::*} to lore of event-item
+	
+	contains({_Detect::3}, "Este item No se debe regalar") is true:
+	
+		if enchantments of event-item is set:
+			set {_Pick} to "%enchantments of event-item%"
+		
+			replace " and" with "," in {_Pick}
+		
+			LogItem(player, "%event-item%", "%lore of event-item%", {_Pick}, "PICKUP")
+		
+			
+		else:
+			
+			LogItem(player, "%event-item%", "%lore of event-item%", "X", "PICKUP")
+			
+	
