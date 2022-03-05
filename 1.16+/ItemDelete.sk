@@ -22,4 +22,4 @@ every 0.5 second: # Medio segundo de tiempo.
 					
 					remove loop-value-3 from loop-player's inventory # Remueveo el item del inventario.
 					
-					log "%loop-player% » Item: %{_item}% | Slot: %{_slot}%" in file "LogsItemDelete.log" # Genero el log dentro de "Skript/logs/logsitemdelete.log"
+					log "%loop-player% » Item: %{_item}% | Slot: %{_slot}%" in file "LogsItemDelete.log" # Genero el log dentro de "Skript/logs/logsitemdelete.log" 
