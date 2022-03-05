@@ -1,4 +1,4 @@
 # Scripts created by sOxTw
-Skript funcionales para versiones 1.16 o superiores.
+- Debes ingresar a la carpeta segun la version para ver mas contenido.
 
 
