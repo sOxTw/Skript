@@ -1,0 +1,646 @@
+# Requiere:
+	# » Skript 2.5-beta3
+	# » SkBee-1.15.1
+	# » SkQuery 4.1.1
+
+options:
+	Prefix: &e&lCanjes &8» &f
+	DPrefix: &e&l[DEBUG SK]: &7&o
+
+command /debug [<text>]:
+	trigger:
+		if player has permission "*":
+			if {debug::%player%} is not set:
+				set {debug::%player%} to true
+				broadcast "{@DPrefix}Activado..."
+			else:
+				delete {debug::%player%}
+				broadcast "{@DPrefix}Desactivado..."
+
+# Objetos en listas | Busqueda de TRUE en coincidencias.
+function contains(list: objects, check: object) :: boolean:
+    loop {_list::*}:
+        if loop-value is {_check}:
+            return true
+    return false
+
+# Chequeador de libros de canje
+function CheckBook(p: player, n: number, c: number):
+	delete {b::%{_p}%} and {r::%{_p}%} and {a::%{_p}%}
+	set {_pl} to "%{_p}%"
+	replace "_" with " " in {_pl}
+	if {_n} = 1:
+		if {_c} = 0:
+			loop all items in {_p}'s inventory:
+				if loop-item is written book:
+					set {_l} to "%lore of loop-item%"
+					replace " and " with ", " in {_l}
+					set {_data::*} to {_l} split at ","
+					contains({_data::1}, "Dueño %{_pl}%") is true:
+						set {_slot} to "%loop-item%"
+						set {_item} to loop-item
+						set {_count} to {_item}
+						if {_count} is set:
+							set {a::%{_p}%} to {_count}
+							set {r::%{_p}%} to "%{a::%{_p}%}%"
+							replace " written book" and "written books" and "s" with "" in {r::%{_p}%}
+							replace "written book" with "1" in {r::%{_p}%}
+							set {r::%{_p}%} to {r::%{_p}%} parsed as number
+							add {r::%{_p}%} to {b::%{_p}%}
+					contains({_data::1}, "Dueño %{_pl}%") is false:
+						set {b::%{_p}%} to 0
+			if {_l} is not set:
+				set {b::%{_p}%} to 0
+			if {debug::%{_p}%} is true:
+				broadcast "{@DPrefix}Count: &b%{b::%{_p}%}%"
+	if {_n} = 2:
+		if {_c} is set:
+			loop all items in {_p}'s inventory:
+				if loop-item is written book:
+					set {_l} to "%lore of loop-item%"
+					replace " and " with ", " in {_l}
+					set {_data::*} to {_l} split at ","
+					contains({_data::*}, "Dueño %{_pl}%") is true:
+						add loop-item to {_l::*}
+			loop {_l::*}:
+				remove ({_c} of loop-value) from {_p}'s inventory
+
+# Seteador de IDs de canje
+function SetTradeID(p: player):
+	set {_lore::*} to lore of {_p}'s held item
+	loop {_lore::*}:
+		if loop-value contains "&e&lID de Canje: ":
+			set {_bindex} to loop-index parsed as number
+			set {_blast} to loop-value
+		else:
+			set {_index} to loop-index parsed as number
+			set {_last} to loop-value
+	if yaml value "TardeID" from "plugins/Canjes/TradeID.yml" is not set:
+		add 1 to {_index}
+		set line {_index} of lore of {_p}'s tool to "&e&lID de Canje: &f0"
+		set yaml value "TardeID" from "plugins/Canjes/TradeID.yml" to 0
+	else:
+		set {_tradeID} to yaml value "TardeID" from "plugins/Canjes/TradeID.yml"
+		add 1 to {_tradeID}
+		set yaml value "TardeID" from "plugins/Canjes/TradeID.yml" to {_tradeID}
+		if {_blast} is set:
+			set line {_bindex} of lore of {_p}'s tool to "%{_blast}%, %{_tradeID}%"
+			set line {_index} of lore of {_p}'s tool to "%{_last}%"
+			stop
+		if {_last} is set:
+			set line {_index} of lore of {_p}'s tool to "&e&lID de Canje: &f%{_tradeID}%"
+			add 1 to {_index}
+			set line {_index} of lore of {_p}'s tool to "%{_last}%"
+			stop
+
+# Traductor de items encantables
+function Traduce(Item: text) :: text:
+	if {_Item} contains "diamond_sword" or "diamond sword":
+		set {_tra} to "&n[Espada de Diamante]"
+		return {_tra}
+	if {_Item} contains "iron_sword" or "iron sword":
+		set {_tra} to "&d&n[Espada de Hierro]"
+		return {_tra}
+	if {_Item} contains "wooden_sword" or "wooden sword":
+		set {_tra} to "&d&n[Espada de Madera]"
+		return {_tra}
+	if {_Item} contains "golden_sword" or "golden sword":
+		set {_tra} to "&d&n[Espada de Oro]"
+		return {_tra}
+	if {_Item} contains "stone_sword" or "stone sword":
+		set {_tra} to "&d&n[Espada de Piedra]"
+		return {_tra}
+	if {_Item} contains "netherite_sword" or "netherite sword":
+		set {_tra} to "&d&n[Espada de Netherite]"
+		return {_tra}
+	if {_Item} contains "diamond_axe" or "diamond axe":
+		set {_tra} to "&d&n[Hacha de Diamante]"
+		return {_tra}
+	if {_Item} contains "iron_axe" or "iron axe":
+		set {_tra} to "&d&n[Hacha de Hierro]"
+		return {_tra}
+	if {_Item} contains "netherite_axe" or "netherite axe":
+		set {_tra} to "&d&n[Hacha de Netherite]"
+		return {_tra}
+	if {_Item} contains "golden_axe" or "golden axe":
+		set {_tra} to "&d&n[Hacha de Oro]"
+		return {_tra}
+	if {_Item} contains "wooden_axe" or "wooden axe":
+		set {_tra} to "&d&n[Hacha de Madera]"
+		return {_tra}
+	if {_Item} contains "stone_axe" or "stone axe":
+		set {_tra} to "&d&n[Hacha de Piedra]"
+		return {_tra}
+	if {_Item} contains "diamond_pickaxe" or "diamond pickaxe":
+		set {_tra} to "&d&n[Pico de Diamante]"
+		return {_tra}
+	if {_Item} contains "netherite_pickaxe" or "netherite pickaxe":
+		set {_tra} to "&d&n[Pico de Netherite]"
+		return {_tra}
+	if {_Item} contains "golden_pickaxe" or "golden pickaxe":
+		set {_tra} to "&d&n[Pico de Oro]"
+		return {_tra}
+	if {_Item} contains "wooden_pickaxe" or "wooden pickaxe":
+		set {_tra} to "&d&n[Pico de Madera]"
+		return {_tra}
+	if {_Item} contains "golden_pickaxe" or "golden pickaxe":
+		set {_tra} to "&d&n[Pico de Oro]"
+		return {_tra}
+	if {_Item} contains "stone_pickaxe" or "stone pickaxe":
+		set {_tra} to "&d&n[Pico de Piedra]"
+		return {_tra}
+	if {_Item} contains "netherite_helmet" or "netherite helmet":
+		set {_tra} to "&d&n[Casco de Netherite]"
+		return {_tra}
+	if {_Item} contains "netherite_chestplate" or "netherite chestplate":
+		set {_tra} to "&d&n[Pechera de Netherite]"
+		return {_tra}
+	if {_Item} contains "netherite_leggings" or "netherite leggings":
+		set {_tra} to "&d&n[Pantalon de Netherite]"
+		return {_tra}
+	if {_Item} contains "netherite_boots" or "netherite boots":
+		set {_tra} to "&d&n[Botas de Netherite]"
+		return {_tra}
+	if {_Item} contains "diamond_helmet" or "diamond helmet":
+		set {_tra} to "&d&n[Casco de Diamante]"
+		return {_tra}
+	if {_Item} contains "diamond_chestplate" or "diamond chestplate":
+		set {_tra} to "&d&n[Pechera de Diamante]"
+		return {_tra}
+	if {_Item} contains "diamond_leggings" or "diamond leggings":
+		set {_tra} to "&d&n[Pantalon de Diamante]"
+		return {_tra}
+	if {_Item} contains "diamond_boots" or "diamond boots":
+		set {_tra} to "&d&n[Botas de Diamante]"
+		return {_tra}
+	if {_Item} contains "golden_helmet" or "golden helmet":
+		set {_tra} to "&d&n[Casco de Oro]"
+		return {_tra}
+	if {_Item} contains "golden_chestplate" or "golden chestplate":
+		set {_tra} to "&d&n[Pechera de Oro]"
+		return {_tra}
+	if {_Item} contains "golden_leggings" or "golden leggings":
+		set {_tra} to "&d&n[Pantalon de Oro]"
+		return {_tra}
+	if {_Item} contains "golden_boots" or "golden boots":
+		set {_tra} to "&d&n[Botas de Oro]"
+		return {_tra}
+	if {_Item} contains "iron_helmet" or "iron helmet":
+		set {_tra} to "&d&n[Casco de Hiero]"
+		return {_tra}
+	if {_Item} contains "iron_chestplate" or "iron chestplate":
+		set {_tra} to "&d&n[Pechera de Hiero]"
+		return {_tra}
+	if {_Item} contains "iron_leggings" or "iron leggings":
+		set {_tra} to "&d&n[Pantalon de Hiero]"
+		return {_tra}
+	if {_Item} contains "iron_boots" or "iron boots":
+		set {_tra} to "&d&n[Botas de Hiero]"
+		return {_tra}
+	if {_Item} contains "bow":
+		set {_tra} to "&d&n[Arco]"
+		return {_tra}
+	if {_Item} contains "book":
+		set {_tra} to "&d&n[Libro de Canje]"
+		return {_tra}
+	if {_Item} contains "air":
+		set {_tra} to "&d&n[Tu mano]"
+		return {_tra}
+	return "este item"
+
+# Aplicador de encantamientos
+function GiveEnchent(p: player, en: text, ap: text, ha: text, cost: text):
+	set {_pl} to "%{_p}%"
+	replace " " with "_" in {_pl}
+	replace "[" and "]" with "" in {_ap}
+	replace "&a" with "" in {_ap}
+	replace "Auto" with "" in {_en}
+	set {_type} to {_ap} in lower case
+	replace "&eCosto: &c&n" and "libro de canje" and "libros de canje" with "" in {_cost}
+	set {_numCost} to {_cost} parsed as number
+	set {_picos::*} to pickaxe
+	set {_espadas::*} to sword
+	set {_botas::*} to boots
+	set {_armas::*} to sword and bow
+	set {_arcos::*} to bow
+	set {_herramientas::*} to pickaxe, axe, hoe and shovel
+	set {_todos::*} to chestplate, helmet, leggings, boots, sword, bow, pickaxe, axe, hoe and shovel
+	set {_armaduras::*} to chestplate, helmet, leggings and boots
+	set {_varTool} to "%{_p}'s held item%"
+	replace " " with "," in {_varTool}
+	set {_Held::*} to {_varTool} split at ","
+	set {_count} to {_Held::1} parsed as number
+	set {_VerifyLore} to "%lore of {_p}'s held item%"
+	replace "&a" with "&e&l" in {_VerifyLore}
+	replace " , " with "," in {_VerifyLore}
+	replace " and " with "," in {_VerifyLore}
+	set {_Lore::*} to {_VerifyLore} split at ","
+	if {_Lore::*} is set:
+		if {_Lore::1} doesn't contain "Auto Velocidad", "Auto Salto", "Vicion Nocturna", "Veneno", "Auto Funde", "Recupera", "Rejuvenecimiento", "Respiracion", "Reforzado", "Lentitud", "Regeneracion", "Ceguera", "Wither", "Excavacion", "Chupador de Vida", "Pesado", "Flechas de veneno", "Flechas de ceguera", "Flechas Wither", "Flechas Explosivas", "Aspecto de Hielo", "Vida extra", "Electrocutador", "MultiDisparo", "NoHambre", "Plasma", "Aislamiento" or "Agilidad":
+			if {_Lore::1} doesn't contain "No pierdes el Item":
+				set {_type} to {_ap} in lower case
+				replace "&eCosto: &c&n" and "libro de canje" and "libros de canje" with "" in {_cost}
+				set {_numCost} to {_cost} parsed as number
+			else:
+				if {_Lore::2} doesn't contain "Auto Velocidad", "Auto Salto", "Vicion Nocturna", "Veneno", "Auto Funde", "Recupera", "Rejuvenecimiento", "Respiracion", "Reforzado", "Lentitud", "Regeneracion", "Ceguera", "Wither", "Excavacion", "Chupador de Vida", "Pesado", "Flechas de veneno", "Flechas de ceguera", "Flechas Wither", "Flechas Explosivas", "Aspecto de Hielo", "Vida extra", "Electrocutador", "MultiDisparo", "NoHambre", "Plasma", "Aislamiento" or "Agilidad":
+					if "%{_en}%" contains "Soulbound":
+						play sound "entity.hoglin.angry" to {_p}
+						send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+						stop
+					else:
+						set {_type} to {_ap} in lower case
+						replace "&eCosto: &c&n" and "libro de canje" and "libros de canje" with "" in {_cost}
+						set {_numCost} to {_cost} parsed as number
+				else:
+					play sound "entity.hoglin.angry" to {_p}
+					send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &cy &7[%{_Lore::2}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+					stop
+		if {_Lore::1} contains "Auto Velocidad", "Auto Salto", "Vicion Nocturna", "Veneno", "Auto Funde", "Recupera", "Rejuvenecimiento", "Respiracion", "Reforzado", "Lentitud", "Regeneracion", "Ceguera", "Wither", "Excavacion", "Chupador de Vida", "Pesado", "Flechas de veneno", "Flechas de ceguera", "Flechas Wither", "Flechas Explosivas", "Aspecto de Hielo", "Vida extra", "Electrocutador", "MultiDisparo", "NoHambre", "Plasma", "Aislamiento" or "Agilidad":
+			if "%{_en}%" doesn't contain "Soulbound":
+				if {_Lore::2} contains "No pierdes el Item":
+					play sound "entity.hoglin.angry" to {_p}
+					send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &cy &7[%{_Lore::2}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+					stop
+				else:
+					play sound "entity.hoglin.angry" to {_p}
+					send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+					stop
+			else:
+				if {_Lore::2} contains "No pierdes el Item":
+					play sound "entity.hoglin.angry" to {_p}
+					send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &cy &7[%{_Lore::2}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+					stop
+				if {_Lore::1} contains "No pierdes el Item":
+					if {_Lore::2} contains "Auto Velocidad", "Auto Salto", "Vicion Nocturna", "Veneno", "Auto Funde", "Recupera", "Rejuvenecimiento", "Respiracion", "Reforzado", "Lentitud", "Regeneracion", "Ceguera", "Wither", "Excavacion", "Chupador de Vida", "Pesado", "Flechas de veneno", "Flechas de ceguera", "Flechas Wither", "Flechas Explosivas", "Aspecto de Hielo", "Vida extra", "Electrocutador", "MultiDisparo", "NoHambre", "Plasma", "Aislamiento" or "Agilidad":
+						play sound "entity.hoglin.angry" to {_p}
+						send "{@Prefix}&cEste item contiene &7[%{_Lore::1}%&7] &cy &7[%{_Lore::2}%&7] &c¡No puedes volver a encantarlo!." to {_p}
+						stop
+				if {_Lore::2} doesn't contain "No pierdes el Item":
+					if {_Lore::1} contains "Auto Velocidad", "Auto Salto", "Vicion Nocturna", "Veneno", "Auto Funde", "Recupera", "Rejuvenecimiento", "Respiracion", "Reforzado", "Lentitud", "Regeneracion", "Ceguera", "Wither", "Excavacion", "Chupador de Vida", "Pesado", "Flechas de veneno", "Flechas de ceguera", "Flechas Wither", "Flechas Explosivas", "Aspecto de Hielo", "Vida extra", "Electrocutador", "MultiDisparo", "NoHambre", "Plasma", "Aislamiento" or "Agilidad":
+						set {_type} to {_ap} in lower case
+						replace "&eCosto: &c&n" and "libro de canje" and "libros de canje" with "" in {_cost}
+						set {_numCost} to {_cost} parsed as number
+	set {_NOItem} to "%{_p}'s held item%"
+	if {_count} is not number:
+		loop {_%{_type}%::*}:
+			if "%loop-value%" contains "%{_p}'s held item%":
+				set {_loop} to loop-value
+				exit loop
+		if "%{_loop}%" contains "%{_p}'s held item%":
+			if {b::%{_p}%} >= {_numCost}:
+				execute console command "en en %{_p}% %{_en}%"
+				send "{@Prefix}&fHas aplicado &e&l%{_en}%&f en &d%Traduce({_NOItem})%." to {_p}
+				SetTradeID({_p})
+				CheckBook({_p}, 2, {_numCost})
+				play sound "block.enchantment_table.use" to {_p}
+				set {_info} to "%lore of {_p}'s held item%"
+				set {_e} to "%enchantments of {_p}'s held item%"
+				replace "Este item No se debe regalar, ni vender es ilegal" with "" in {_info}
+				replace " and " with "," in {_info}
+				replace " ," and " , " with "," in {_info}
+				replace "Dueño" with "D:" in {_info}
+				replace "Rango:" with "R:" in {_info}
+				replace "Fecha:" with "F: " in {_info}
+				set {_held} to "%{_p}'s held item%" in upper case
+				set {_tradeID} to yaml value "TardeID" from "plugins/Canjes/TradeID.yml"
+				log "[ENCHANT %{_tradeID}%] %{_p}% > Aplico: %{_en}% | Item: %{_held}% %{_e}% | Lore: %{_info}%"   to "Canjes.log"
+				CheckBook({_p}, 1, 0)
+			else:
+				play sound "entity.hoglin.angry" to {_p}
+				send "{@Prefix}&cNo tienes suficientes libros de canje en tu inventario." to {_p}
+		else:
+			play sound "entity.hoglin.angry" to {_p}
+			send "{@Prefix}&fNo puedes aplicar &e&l%{_en}%&f en %Traduce({_NOItem})%." to {_p}
+	else:
+		play sound "entity.hoglin.angry" to {_p}
+		if {_count} = 0:
+			send "{@Prefix}&fNo se puede aplicar encantamientos en %Traduce({_NOItem})%&f." to {_p}
+		if {_count} > 0:
+			send "{@Prefix}&fNo se puede aplicar encantamientos en &d&l%{_count}% %Traduce({_NOItem})%&f." to {_p}
+
+# Generador de Spawners		
+function GiveSpawner(p: player, name: text, g: text):
+	set {_Line1} to "&b► &fColoca este spawner"
+	set {_Line2} to "&fen donde no tengas que"
+	set {_Line3} to "&fquitarlo luego."
+	set {_Line4} to "&4&l¡No lo podras volver"
+	set {_Line5} to "&4&la mover!"
+	set {_Line6} to "&8--------- [*] &8---------"
+	set {_s} to "%{_name}%" in lower case
+	set {_sl} to "%{_name}%" in upper case
+	replace "&a&l" or "&c&l" with "" in {_s}
+	replace "&a&l" or "&c&l" with "" in {_sl}
+	replace " " with "_" in {_s}
+	replace "&f." with "" in {_g}
+	if {debug::%{_p}%} is true:
+		broadcast "{@DPrefix}%{_s}%"
+	give {_p} spawner named "%{_name}%" with lore "%{_Line1}%" and "%{_Line2}%" and "%{_Line3}%" and "%{_Line4}%" and "%{_Line5}%" and "%{_Line6}%" with nbt "{BlockEntityTag:{SpawnData:{entity:{id:""minecraft:%{_s}%""}},id:""minecraft:mob_spawner""}}"
+	CheckBook({_p}, 2, 1)
+	replace "&fde &e&l" with "&a&l" in {_g}
+	send "{@Prefix}Has obtenido &b1 Generador de&r %{_g}%." to {_p}
+	log "[SPAWNER] %{_p}% > %{_sl}%" to "Canjes.log"
+	play sound "entity.wandering_trader.yes" to {_p}
+
+# Inventario de encantamientos
+function OpenEnchant(p: player, c: number):
+	play sound "block.barrel.open" to {_p}
+	set {_n} to 0
+	open chest with 6 rows named "&9&lEncantamientos &8[Libros %{_c}%]" to {_p}
+	loop 56 times:
+		loop all players:
+		
+			if loop-player has permission "*":
+				if {debug::%{_p}%} is true:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named "&e&l%{_n}%"
+					add 1 to {_n}
+				else:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named ""
+					add 1 to {_n}
+			else:
+				set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
+				add 1 to {_n}
+	set slot 10 of {_p}'s current inventory to popped chorus fruit named "&6◆ &c&lVenom" with lore "" and "&d× &bOportunidad de envenenar" and "&bal enemigo al atacar." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 11 of {_p}'s current inventory to grindstone named "&6◆ &c&lRegain" with lore "" and "&d× &bRecobra la durabilidad si minas" and "&bdel mismo mineral del item." and "" and "&8&oAplicable en:" and "&a[PICOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 12 of {_p}'s current inventory to netherite helmet named "&6◆ &c&lNightvision" with lore "" and "&d× &bSe aplica el efecto " and "&bpocion de vision nocturna." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 13 of {_p}'s current inventory to totem of undying named "&6◆ &c&lRejuvination" with lore "" and "&d× &bRecupera lentamente durabilidad" and "&bcuando se lleva en la mano." and "" and "&8&oAplicable en:" and "&a[TODOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 14 of {_p}'s current inventory to turtle helmet named "&6◆ &c&lWaterbreathing" with lore "" and "&d× &bAplica el efecto pocion" and "&bde respiracion bajo agua." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 15 of {_p}'s current inventory to netherite pickaxe named "&6◆ &c&lReinforced" with lore "" and "&d× &bMinas cualquier mineral" and "&bde forma instantanea." and "" and "&8&oAplicable en:" and "&a[PICOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 16 of {_p}'s current inventory to packed ice named "&6◆ &c&lSlowness" with lore "" and "&d× &bPosibilidad de frenar al enemigo" and "&b cuando se lo golpea." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 19 of {_p}'s current inventory to stone sword named "&6◆ &c&lWithering" with lore "" and "&d× &bEfecto Wither a un" and "&benemigo al golpear." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 20 of {_p}'s current inventory to golden apple named "&6◆ &c&lRegeneration" with lore "" and "&d× &bOportunidad de recuperar" and "&bmas salud cuando se sana." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 21 of {_p}'s current inventory to poison tipped arrow with all flags hidden named "&6◆ &c&lPoisonArrows" with lore "" and "&d× &bEnvenena al enemigo." and "" and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 22 of {_p}'s current inventory to spectral arrow named "&6◆ &c&lFlashingArrows" with lore "" and "&d× &bLas flechas pueden" and "&bcegar al enemigo." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 23 of {_p}'s current inventory to arrow named "&6◆ &c&lWitheredArrows" with lore "" and "&d× &bEfecto Wither en tu" and "&barco." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 24 of {_p}'s current inventory to blue ice named "&6◆ &c&lIceAspect" with lore "" and "&d× &bSe puede congelar" and "&ba un enemigo." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 25 of {_p}'s current inventory to beetroot named "&6◆ &c&lLife" with lore "" and "&d× &bAumento de corazones" and "&bsobre el nivel maximo." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	set slot 28 of {_p}'s current inventory to scaffolding named "&6◆ &c&lAutoJump" with lore "" and "&d× &bAplica el efecto pocion" and "&bde salto." and "" and "&8&oAplicable en:" and "&a[BOTAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 29 of {_p}'s current inventory to rabbit foot named "&6◆ &c&lAutoSpeed" with lore "" and "&d× &bAplica el efecto pocion" and "&bde velocidad." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 30 of {_p}'s current inventory to black dye named "&6◆ &c&lBlindness" with lore "" and "&d× &bCiega a un enemigo" and "&bal golpear." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 31 of {_p}'s current inventory to nether wart item named "&6◆ &c&lLifeLeech" with lore "" and "&d× &bChupa algo de sangre" and "&bal enemigo." and "" and "&8&oAplicable en:" and "&a[ARMAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 32 of {_p}'s current inventory to tnt block named "&6◆ &c&lExplodingArrows" with lore "" and "&d× &bPosibilidad de hacer" and "&bexplotar al enemigo." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 33 of {_p}'s current inventory to redstone repeater named "&6◆ &c&lElectrocute" with lore "" and "&d× &bPosibilidad de marear" and "&bal enemigo." and "" and "&8&oAplicable en:" and "&a[ARMAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 34 of {_p}'s current inventory to cooked chicken named "&6◆ &c&lWellFed" with lore "" and "&d× &bLos niveles de hambre" and "&bse mantienen." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 37 of {_p}'s current inventory to trident named "&6◆ &c&lMultishoot" with lore "" and "&d× &bPuede disparar varias" and "&bflechas a la vez." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 38 of {_p}'s current inventory to chain chestplate named "&6◆ &c&lInsulation" with lore "" and "&d× &bProtege de la electricidad" and "&by el plasma." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"
+	set slot 39 of {_p}'s current inventory to leash named "&6◆ &c&lSoulbound" with lore "" and "&d× &bSi mueres no perderas" and "&bel item." and "" and "&8&oAplicable en:" and "&a[TODOS]" and "" and "&eCosto: &c&n3 libros de canje"
+	set slot 52 of {_p}'s current inventory to iron nugget named "&bSalir" with lore "&fPreciona para salir"
+	if {_c} >= 1:
+		set slot 10 of {_p}'s current inventory to glowing popped chorus fruit named "&6◆ &c&lVenom" with lore "" and "&d× &bOportunidad de envenenar" and "&bal enemigo al atacar." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 11 of {_p}'s current inventory to glowing grindstone named "&6◆ &c&lRegain" with lore "" and "&d× &bRecobra la durabilidad si minas" and "&bdel mismo mineral del item." and "" and "&8&oAplicable en:" and "&a[PICOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 12 of {_p}'s current inventory to glowing netherite helmet named "&6◆ &c&lNightvision" with lore "" and "&d× &bSe aplica el efecto " and "&bpocion de vision nocturna." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 13 of {_p}'s current inventory to glowing totem of undying named "&6◆ &c&lRejuvination" with lore "" and "&d× &bRecupera lentamente durabilidad" and "&bcuando se lleva en la mano." and "" and "&8&oAplicable en:" and "&a[TODOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 14 of {_p}'s current inventory to glowing turtle helmet named "&6◆ &c&lWaterbreathing" with lore "" and "&d× &bAplica el efecto pocion" and "&bde respiracion bajo agua." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 15 of {_p}'s current inventory to glowing netherite pickaxe named "&6◆ &c&lReinforced" with lore "" and "&d× &bMinas cualquier mineral" and "&bde forma instantanea." and "" and "&8&oAplicable en:" and "&a[PICOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 16 of {_p}'s current inventory to glowing packed ice named "&6◆ &c&lSlowness" with lore "" and "&d× &bPosibilidad de frenar al enemigo" and "&b cuando se lo golpea." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 19 of {_p}'s current inventory to glowing stone sword named "&6◆ &c&lWithering" with lore "" and "&d× &bEfecto Wither a un" and "&benemigo al golpear." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 20 of {_p}'s current inventory to notch apple named "&6◆ &c&lRegeneration" with lore "" and "&d× &bOportunidad de recuperar" and "&bmas salud cuando se sana." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 21 of {_p}'s current inventory to glowing poison tipped arrow with all flags hidden named "&6◆ &c&lPoisonArrows" with lore "" and "&d× &bEnvenena al enemigo." and "" and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 22 of {_p}'s current inventory to glowing spectral arrow named "&6◆ &c&lFlashingArrows" with lore "" and "&d× &bLas flechas pueden" and "&bcegar al enemigo." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 23 of {_p}'s current inventory to glowing arrow named "&6◆ &c&lWitheredArrows" with lore "" and "&d× &bEfecto Wither en tu" and "&barco." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 24 of {_p}'s current inventory to glowing blue ice named "&6◆ &c&lIceAspect" with lore "" and "&d× &bSe puede congelar" and "&ba un enemigo." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n1 libro de canje"
+		set slot 25 of {_p}'s current inventory to glowing beetroot named "&6◆ &c&lLife" with lore "" and "&d× &bAumento de corazones" and "&bsobre el nivel maximo." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n1 libro de canje"
+	if {_c} >= 2:
+		set slot 28 of {_p}'s current inventory to glowing scaffolding named "&6◆ &c&lAutoJump" with lore "" and "&d× &bAplica el efecto" and "&bpocion de salto." and "" and "&8&oAplicable en:" and "&a[BOTAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 29 of {_p}'s current inventory to glowing rabbit foot named "&6◆ &c&lAutoSpeed" with lore "" and "&d× &bAplica el efecto pocion" and "&bde velocidad." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 30 of {_p}'s current inventory to glowing black dye named "&6◆ &c&lBlindness" with lore "" and "&d× &bCiega a un enemigo" and "&bal golpear." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 31 of {_p}'s current inventory to glowing nether wart item named "&6◆ &c&lLifeLeech" with lore "" and "&d× &bChupa algo de sangre" and "&bal enemigo." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 32 of {_p}'s current inventory to glowing tnt block named "&6◆ &c&lExplodingArrows" with lore "" and "&d× &bPosibilidad de hacer" and "&bexplotar al enemigo." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n2 libro de canje"
+		set slot 33 of {_p}'s current inventory to glowing redstone repeater named "&6◆ &c&lElectrocute" with lore "" and "&d× &bPosibilidad de marear" and "&bal enemigo." and "" and "&8&oAplicable en:" and "&a[ESPADAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 34 of {_p}'s current inventory to glowing cooked chicken named "&6◆ &c&lWellFed" with lore "" and "&d× &bLos niveles de hambre" and "&bse mantienen." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 37 of {_p}'s current inventory to glowing trident named "&6◆ &c&lMultishoot" with lore "" and "&d× &bPuede disparar varias" and "&bflechas a la vez." and "" and "&8&oAplicable en:" and "&a[ARCOS]" and "" and "&eCosto: &c&n2 libros de canje"
+		set slot 38 of {_p}'s current inventory to glowing chain chestplate named "&6◆ &c&lInsulation" with lore "" and "&d× &bProtege de la electricidad" and "&by el plasma." and "" and "&8&oAplicable en:" and "&a[ARMADURAS]" and "" and "&eCosto: &c&n2 libros de canje"	
+	if {_c} >= 3:
+		set slot 39 of {_p}'s current inventory to glowing leash named "&6◆ &c&lSoulbound" with lore "" and "&d× &bSi mueres no perderas" and "&bel item." and "" and "&8&oAplicable en:" and "&a[TODOS]" and "" and "&eCosto: &c&n3 libros de canje"
+
+# Inventario de Spawners	
+function OpenSpawns(p: player, c: number):
+	play sound "block.barrel.open" to {_p}
+	set {_n} to 0
+	open chest with 6 rows named "&d&lSpawners &8[Libros %{_c}%]" to {_p}
+	loop 56 times:
+		loop all players:
+			if loop-player has permission "*":
+				if {debug::%{_p}%} is true:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named "&e&l%{_n}%"
+					add 1 to {_n}
+				else:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named ""
+					add 1 to {_n}
+			else:
+				set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
+				add 1 to {_n}
+	set slot 10 of {_p}'s current inventory to pig spawn egg named "&a&lPig" with lore "&e- &fObtendras un generador" and "&fde &e&lCerdos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 11 of {_p}'s current inventory to cow spawn egg named "&a&lCow" with lore "&e- &fObtendras un generador" and "&fde &e&lVacas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 12 of {_p}'s current inventory to chicken spawn egg named "&a&lChicken" with lore "&e- &fObtendras un generador" and "&fde &e&lPollos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 13 of {_p}'s current inventory to rabbit spawn egg named "&a&lRabbit" with lore "&e- &fObtendras un generador" and "&fde &e&lConejos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 14 of {_p}'s current inventory to ocelot spawn egg named "&a&lOcelot" with lore "&e- &fObtendras un generador" and "&fde &e&lOcelotes&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 15 of {_p}'s current inventory to sheep spawn egg named "&a&lSheep" with lore "&e- &fObtendras un generador" and "&fde &e&lOvejas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 16 of {_p}'s current inventory to mooshroom spawn egg named "&a&lMooshroom" with lore "&e- &fObtendras un generador" and "&fde &e&lVacasHongo&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 19 of {_p}'s current inventory to magma cube spawn egg named "&c&lMagma Cube" with lore "&e- &fObtendras un generador" and "&fde &e&lMagma Cube&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 20 of {_p}'s current inventory to skeleton spawn egg named "&c&lSkeleton" with lore "&e- &fObtendras un generador" and "&fde &e&lEsqueletos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 21 of {_p}'s current inventory to blaze spawn egg named "&c&lBlaze" with lore "&e- &fObtendras un generador" and "&fde &e&lBlaze&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 22 of {_p}'s current inventory to slime spawn egg named "&c&lSlime" with lore "&e- &fObtendras un generador" and "&fde &e&lSlime&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 23 of {_p}'s current inventory to spider spawn egg named "&c&lSpider" with lore "&e- &fObtendras un generador" and "&fde &e&lArañas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 24 of {_p}'s current inventory to creeper spawn egg named "&c&lCreeper" with lore "&e- &fObtendras un generador" and "&fde &e&lCreepers&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 25 of {_p}'s current inventory to wolf spawn egg named "&c&lWolf" with lore "&e- &fObtendras un generador" and "&fde &e&lLobos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 28 of {_p}'s current inventory to polar bear spawn egg named "&c&lSnowman" with lore "&e- &fObtendras un generador" and "&fde &e&lSnowman&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 29 of {_p}'s current inventory to llama spawn egg named "&a&lLlama" with lore "&e- &fObtendras un generador" and "&fde &e&lLlamas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 30 of {_p}'s current inventory to turtle spawn egg named "&a&lTurtle" with lore "&e- &fObtendras un generador" and "&fde &e&lTortugas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 31 of {_p}'s current inventory to husk spawn egg named "&c&lHusk" with lore "&e- &fObtendras un generador" and "&fde &e&lHusk's&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 32 of {_p}'s current inventory to cod spawn egg named "&a&lCod" with lore "&e- &fObtendras un generador" and "&fde &e&lBacalaos&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 33 of {_p}'s current inventory to dolphin spawn egg named "&a&lDolphin" with lore "&e- &fObtendras un generador" and "&fde &e&lDelfines&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 34 of {_p}'s current inventory to panda spawn egg named "&a&lPanda" with lore "&e- &fObtendras un generador" and "&fde &e&lPandas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 37 of {_p}'s current inventory to bee spawn egg named "&a&lBee" with lore "&e- &fObtendras un generador" and "&fde &e&lAbejas&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 38 of {_p}'s current inventory to polar bear spawn egg named "&a&lPolar Bear" with lore "&e- &fObtendras un generador" and "&fde &e&lOsos Polares&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 39 of {_p}'s current inventory to parrot spawn egg named "&a&lParrot" with lore "&e- &fObtendras un generador" and "&fde &e&lLoros&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 40 of {_p}'s current inventory to fox spawn egg named "&a&lFox" with lore "&e- &fObtendras un generador" and "&fde &e&lZorros&f." and "" and "&f&lValor: &c1 Libro de canje" and "" and "&a» &7Clic para canjear"
+	set slot 52 of {_p}'s current inventory to iron nugget named "&bSalir" with lore "&fPreciona para salir"
+
+# Abrir inventario 1 | Muestra Canjes, Encantamientos
+function OpenChest(p: player, c: number):
+	wait 10 ticks
+	set {_tag} to {_p}'s display name
+	if {debug::%{_p}%} is true:	
+		broadcast "" 
+		broadcast "{@DPrefix}&cEjecute OpenChest" 
+		broadcast "" 
+	if {_c} = 0:
+		open chest with 1 rows named "&8&lCanjes" to {_p}
+		play sound "block.shulker_box.open" to {_p}
+		set {_n} to 0
+		loop 9 times:
+			loop all players:
+				if loop-player has permission "*":
+					if {debug::%{_p}%} is true:
+						set slot {_n} of {_p}'s current inventory to blue stained glass pane named "&e&l%{_n}%"
+						add 1 to {_n}
+					else:
+						set slot {_n} of {_p}'s current inventory to blue stained glass pane named ""
+						add 1 to {_n}
+				else:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
+					add 1 to {_n}
+		set slot 2 of {_p}'s current inventory to lectern named "&9&lEncantamientos" with lore "&c&lUps! %{_tag}%" and "&fNo posees libros" and "&fde canje."
+		# set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
+		set slot 6 of {_p}'s current inventory to spawner named "&d&lSpawners" with lore "&c&lUps! %{_tag}%" and "&fNo posees libros" and "&fde canje."
+		if {debug::%{_p}%} is true:
+			send "" to {_p}
+			send "{@DPrefix}&cNo tienes libros" to {_p}
+			send "" to {_p}
+	if {_c} >= 1:
+		open chest with 1 rows named "&8&lCanjes" to {_p}
+		set {_n} to 0
+		loop 9 times:
+			loop all players:
+				if loop-player has permission "*":
+					if {debug::%{_p}%} is true:
+						set slot {_n} of {_p}'s current inventory to blue stained glass pane named "&e&l%{_n}%"
+						add 1 to {_n}
+					else:
+						set slot {_n} of {_p}'s current inventory to blue stained glass pane named ""
+						add 1 to {_n}
+				else:
+					set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
+					add 1 to {_n}
+		set slot 2 of {_p}'s current inventory to glowing lectern named "&9&lEncantamientos" with lore "&a&lWow! %{_tag}%" and "&fTienes &e&l%{_c}% &fLibro[s]" and "&fde canje." and "" and "&a» &7Ingresa para canjear"
+		# set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
+		set slot 6 of {_p}'s current inventory to glowing spawner named "&d&lSpawners" with lore "&a&lWow! %{_tag}%" and "&fTienes &e&l%{_c}% &fLibro[s]" and "&fde canje." and "" and "&a» &7Ingresa para canjear"
+
+# Eventos de CLICK | Reacciones
+on inventory click:
+	if "%type of event-inventory%" is "player inventory":
+		if {ApllySounlbound::%player%} is set:
+			send "{@Prefix}&eEspera un momento para interactuar con tu inventario."
+			cancel event
+	if "%type of event-inventory%" is "chest inventory":
+		if name of event-inventory is "&8&lCanjes":
+			if clicked slot is 2:
+				cancel event
+				CheckBook(player, 1, 0)
+				if {b::%player%} is not set:
+					OpenEnchant(player, 0)
+				else:
+					OpenEnchant(player, {b::%player%})
+				
+			if clicked slot is 6:
+				cancel event
+				CheckBook(player, 1, 0)
+				if {b::%player%} is not set:
+					OpenSpawns(player, 0)
+				else:
+					OpenSpawns(player, {b::%player%})
+
+			# if clicked slot is 4:
+			# 	cancel event
+			# 	OpenTutorial(player, "main")
+				
+			else:
+				cancel event
+		if name of event-inventory is "&9&lEncantamientos &8[Libros %{b::%player%}%]":
+			if clicked slot is stained glass pane:
+				cancel event
+				
+			else if name of clicked slot is "&bSalir":
+				cancel event
+				CheckBook(player, 1, 0)
+				OpenChest(player, {b::%player%})
+			else:
+				if {b::%player%} > 0:
+					if lore of clicked slot is set:
+						cancel event
+						set {_lore::*} to lore of clicked slot
+						set {_name} to name of clicked slot
+						replace "&6◆ &c&l" with "" in {_name}
+						set {_hand} to player's held item
+						GiveEnchent(player, {_name}, {_lore::6}, {_hand}, {_lore::8})
+						CheckBook(player, 1, 0)
+						OpenEnchant(player, {b::%player%})
+						delete {ApllySounlbound::%player%}
+				else:
+					play sound "entity.hoglin.angry" to player
+					cancel event
+					send "{@Prefix}&c¡No tienes libros de canje!"
+		if name of event-inventory is "&d&lSpawners &8[Libros %{b::%player%}%]":
+			if clicked slot is stained glass pane:
+				cancel event
+			else if name of clicked slot is "&bSalir":
+				cancel event
+				CheckBook(player, 1, 0)
+				if {b::%player%} is not set:
+					OpenChest(player, 0)
+				else:
+					OpenChest(player, {b::%player%})
+			
+			else if clicked slot is spawn egg:
+				if player has enough space for 1 spawner:
+					if {b::%player%} > 0:
+						cancel event
+						remove 1 of {item} from player's inventory
+						set {_g::*} to lore of clicked slot
+						GiveSpawner(player, name of clicked slot, "%{_g::2}%")
+						CheckBook(player, 1, 0)
+						OpenSpawns(player, {b::%player%})
+					else:
+						play sound "entity.hoglin.angry" to player
+						cancel event
+						send "{@Prefix}&c¡No tienes libros de canje!"
+				else:
+					play sound "entity.hoglin.angry" to player
+					cancel event
+					send "{@Prefix}&cNo tienes espacio en tu inventario, deja vacio al menos un espacio para poder canjear." to player
+			else:
+				if name of clicked slot is " ":
+					cancel event
+		# if name of event-inventory is "&c&lTutorial":
+		# 	if clicked slot is stained glass pane:
+		# 		cancel event
+		# 	else if name of clicked slot is "&bSalir":
+		# 		cancel event
+		# 		OpenTutorial(player, "main")
+		# 	else if clicked slot is enchanting table:
+		# 		OpenTutorial(player, "ench")
+
+# Comando principal de apertura de inventario CANJE
+command /canjes [<text=main>]:
+	trigger:
+		if arg 1 is "reload":
+			if player has permission "*":
+				execute player command "sk reload Canjes.sk"
+		if arg 1 is "main":
+			CheckBook(player, 1, 0)
+			wait 10 ticks
+			if {b::%player%} is not set:
+				OpenChest(player, 0)
+			else:
+				OpenChest(player, {b::%player%})
+		else if arg 1 is "enchant":
+			CheckBook(player, 1, 0)
+			wait 10 ticks
+			if {b::%player%} is not set:
+				OpenEnchant(player, 0)
+			else:
+				OpenEnchant(player, {b::%player%})
+		else if arg 1 is "spawner":
+			CheckBook(player, 1, 0)
+			wait 10 ticks
+			if {b::%player%} is not set:
+				OpenSpawns(player, 0)
+			else:
+				OpenSpawns(player, {b::%player%})
+
+# Evento PLACE | Al colocar spawners
+on place:
+	if event-block is spawner:
+		if "%lore of player's held item%" contains "[*]":
+			if block below event-block is glass:
+				set {_name} to name of player's held item
+				replace "&a&l" with "" in {_name}
+				set {_LocX} to x-coordinate of player 
+				set {_LocY} to y-coordinate of player 
+				set {_LocZ} to z-coordinate of player
+				set {_world} to "%world%"
+				set {_Location} to "[Loc: %{_LocX}% %{_LocY}% %{_LocZ}%] [Wor: %{_world}%]"
+				log "[SPAWNER] %player% > Coloco un spawner de %{_name}% %{_Location}%" to "Canjes.log"
+			else:
+				send "{@Prefix}&cSolo puedes colocar un spawner sobre vidrio transparente." to player
+				cancel event
