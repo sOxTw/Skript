@@ -1,0 +1,19 @@
+options:
+    Pre: "&c&l%player% &8» &bEstas intentando eliminar tu inventario por completo, los items desapareceran de forma permanete. Para aceptar usa nuevamente &c&l/ci&b."
+
+on command:
+    if player has permission "essentials.clearinventory":
+        if player does not have permission "*":
+            if full command is "ci" or "clearinventory" or "eci" or "clean" or "eclean" or "clear" or "eclear" or "clearinvent" or "eclearinvent" or "eclearinventory":
+                if {ExcecuteCi::%player's uuid%} is not set:
+                    cancel event
+                    send ""
+                    send {@Pre}
+                    send ""
+                    set {ExcecuteCi::%player's uuid%} to true
+                    wait 10 seconds
+                    delete {ExcecuteCi::%player's uuid%}
+
+                if {ExcecuteCi::%player's uuid%} is set:
+                    delete {ExcecuteCi::%player's uuid%}
+                    stop
