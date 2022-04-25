@@ -517,7 +517,7 @@ function OpenChest(p: player, c: number):
 					set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
 					add 1 to {_n}
 		set slot 2 of {_p}'s current inventory to lectern named "&9&lEncantamientos" with lore "&c&lUps! %{_tag}%" and "&fNo posees libros" and "&fde canje."
-		set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
+		# set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
 		set slot 6 of {_p}'s current inventory to spawner named "&d&lSpawners" with lore "&c&lUps! %{_tag}%" and "&fNo posees libros" and "&fde canje."
 		if {debug::%{_p}%} is true:
 			send "" to {_p}
@@ -539,7 +539,7 @@ function OpenChest(p: player, c: number):
 					set slot {_n} of {_p}'s current inventory to blue stained glass pane named " "
 					add 1 to {_n}
 		set slot 2 of {_p}'s current inventory to glowing lectern named "&9&lEncantamientos" with lore "&a&lWow! %{_tag}%" and "&fTienes &e&l%{_c}% &fLibro[s]" and "&fde canje." and "" and "&a» &7Ingresa para canjear"
-		set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
+		# set slot 4 of {_p}'s current inventory to writable book named "&c&lTutorial" with lore "&e&lOye! %{_tag}%" and "&f¡Lee esto!"
 		set slot 6 of {_p}'s current inventory to glowing spawner named "&d&lSpawners" with lore "&a&lWow! %{_tag}%" and "&fTienes &e&l%{_c}% &fLibro[s]" and "&fde canje." and "" and "&a» &7Ingresa para canjear"
 
 # Eventos de CLICK | Reacciones
@@ -566,12 +566,12 @@ on inventory click:
 				else:
 					OpenSpawns(player, {b::%player%})
 
-			if clicked slot is 4:
-				cancel event
-				OpenTutorial(player, "main")
+			# if clicked slot is 4:
+			# 	cancel event
+			# 	OpenTutorial(player, "main")
 				
-			else:
-				cancel event
+			# else:
+			# 	cancel event
 		if name of event-inventory is "&9&lEncantamientos &8[Libros %{b::%player%}%]":
 			if clicked slot is stained glass pane:
 				cancel event
@@ -627,14 +627,14 @@ on inventory click:
 			else:
 				if name of clicked slot is " ":
 					cancel event
-		if name of event-inventory is "&c&lTutorial":
-			if clicked slot is stained glass pane:
-				cancel event
-			else if name of clicked slot is "&bSalir":
-				cancel event
-				OpenTutorial(player, "main")
-			else if clicked slot is enchanting table:
-				OpenTutorial(player, "ench")
+		# if name of event-inventory is "&c&lTutorial":
+		# 	if clicked slot is stained glass pane:
+		# 		cancel event
+		# 	else if name of clicked slot is "&bSalir":
+		# 		cancel event
+		# 		OpenTutorial(player, "main")
+		# 	else if clicked slot is enchanting table:
+		# 		OpenTutorial(player, "ench")
 
 # Comando principal de apertura de inventario CANJE
 command /canjes [<text=main>]:
