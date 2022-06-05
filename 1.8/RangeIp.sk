@@ -1,0 +1,72 @@
+options:
+    Pre: &c&lRangeIP &4> 
+
+    MotivoDefault: Hacks/Reporte
+
+command /rangeip [<text>] [<text>] [<text>]:
+    permission: rangeip.manager
+    permission message: "&c&lNo puedes usar este comando!"
+    trigger:
+        set {_Ip} to arg 2
+        replace all "." with "-" in {_Ip}
+        if arg 1 is "add":
+            if arg 2 contains "*":
+                set {_checkList::*} to yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+                if "%{_checkList::*}%" does not contain  arg 2:
+
+                    if arg 3 is set:
+                        set yaml value "Range.%{_Ip}%" from "../../RangeIP/list-ip.yml" to arg 3
+                        add arg 2 to yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+                        send "{@Pre}&aSe añadio la ip &l%arg 2% &aa la lista de rangos bloqueados, con el motivo: &l%arg 3%&a."
+
+                    else:
+
+                        set yaml value "Range.%{_Ip}%" from "../../RangeIP/list-ip.yml" to "{@MotivoDefault}"
+                        add arg 2 to yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+                        send "{@Pre}&aSe añadio la ip &l%arg 2% &aa la lista de rangos bloqueados, con el motivo: &l{@MotivoDefault}&a."
+
+                else:
+                    send "{@Pre}&cYa existe &l%arg 2% &cen la lista de Rangos bloqueados."
+
+            else: 
+                send "{@Pre}&aImportante la IP debe contener *. Ejemplo 181.93.*.* para ser agregada."
+        else if arg 1 is "del":
+            remove arg 2 from yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+            send "{@Pre}&cSe removio la ip &l%arg 2% &ca la lista de rangos bloqueados."
+
+        else if arg 1 is "list":
+            set {_ranges::*} to yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+            send "&7&m             &r &bRangos de IP &7&m             &r"
+            loop {_ranges::*}:
+                set {_Data} to "%loop-value%"
+                replace all "." with "-" in {_Data}
+                set {_Motivo} to yaml value "Range.%{_Data}%" from "../../RangeIP/list-ip.yml"
+                send "&2▪ Rango: &a&l%loop-value% &7- &bMotivo: &3%{_Motivo}%"
+        else:
+            send "               &4< &c&lRangeIP &4> "
+            send "&4> &c/rangeip add <ip> &7- &fAñade el rango a la lista de bloqueados con el motiovo default."
+            send "&4> &c/rangeip add <ip> <motivo> &7- &fAñade el rango a la lista de bloqueados con un motivo personalizado."
+            send "&4> &c/rangeip del <ip> &7- &fRemueve el rango de la lista de bloquedos."
+            send "&4> &c/rangeip list &7- &fMuestra una lista de rangos bloqueados con sus motivos."
+            send "&aImportante la IP debe contener *. Ejemplo 181.93.*.* para ser agregada."
+
+on join:
+    if player does not have permission "rangeip.bypass":
+        set {_PlayerIp} to ip of player
+        replace all "." with "," in {_PlayerIp}
+        set {_ObjetList::*} to {_PlayerIp} split at ","
+        set {_ranges::*} to yaml list "Range.List" from "../../RangeIP/list-ip.yml"
+        loop {_ranges::*}:
+            loop {_ObjetList::*}:
+                set {_splitList} to loop-value-1
+                set {_splitp} to loop-value-2
+                set {_Motivo} to yaml value "Range.%{_splitp}%" from "../../RangeIP/list-ip.yml"
+                replace all "." with "," in {_splitList}
+                replace all "." with "," in {_splitIp}
+                set {_valueList::*} to {_splitList} split at ","
+                set {_ObjetList::*} to {_splitIp} split at ","
+                if "%{_valueList::1}%" is "%{_ObjetList::1}%":
+                    if "%{_valueList::2}%" is "%{_ObjetList::2}%":
+                        set {_Motivo} to yaml value "Range.%{_valueList::1}%-%{_valueList::2}%-%{_valueList::3}%-%{_valueList::3}%" from "../../RangeIP/list-ip.yml"
+                        kick the player due to "&cKicked whilst connecting to Lobby1: &fTu ip, ha sido restringido de este server, razon &6%{_Motivo}%&f, si crees que es un error apela tu baneo aqui &6survivalrolemine.enjin.com/forum&f     De lo contrario compra el desban aqui: &6survivalrolemine.buycraft.net &a(Recuerda que si eres baneado, tu progreso, rangos etc. No se perdera)"
+                        exit loop
