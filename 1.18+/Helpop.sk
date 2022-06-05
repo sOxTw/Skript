@@ -1,22 +1,34 @@
-# Dependecias: Skript 2.2 | SkQuery 3
-# Creador: sOxTw | Web: https://survivalrolemine.enjin.com/profile/soxtw
-# Servidor: SurvivalRolemine Network
+#!------------------------------------------------
+#!     __  __     __                 _____ __ __
+#!    / / / /__  / /___  ____  ____ / ___// //_/
+#!   / /_/ / _ \/ / __ \/ __ \/ __ \\__ \/ ,<   
+#!  / __  /  __/ / /_/ / /_/ / /_/ /__/ / /| |  
+#! /_/ /_/\___/_/ .___/\____/ .___/____/_/ |_|  
+#!             /_/         /_/                  
+#!------------------------------------------------
+
+#! This plugin is based on [EssentialsX] a Bukkit/Spigot plugin that is responsible for providing mixed tools to the server. In which is the command [/helpop].
+#! This is where HelpopSk intervenes and is responsible for managing the messages that the user sends to the staff and the staff to the user.
+
+#! .-.-.-.-.-.-.-.-.-.-.-. Using .-.-.-.-.-.-.-.-.-.-.-.
+#! # [Skript 2.6.2] #! For proper functioning of the plugin for Essentials Plugin.
+#! # [SkQuery 4.1.6] #! It is required for the use of parts of the code, part of the syntax.
+#! .-.-.-.-.-.-.-.-.-.-.-. ----- .-.-.-.-.-.-.-.-.-.-.-.
+
+#! .-.-.-.-.-.-.-.-.-.-.-. Permissions .-.-.-.-.-.-.-.-.-.-.-.
+#! essentials.helpop.receive # It is responsible for notifying those who have said permission when a STAFF or USER uses the /helpop command.
+#! helpopsk.chat.op # It is responsible for notifying those who have said permission when a ADMIN/OP uses the /op <message> command.
+#! helpopsk.chat.mod # It is responsible for notifying those who have said permission when a STAFF uses the /mod <message> command.
+#! .-.-.-.-.-.-.-.-.-.-.-. ----------- .-.-.-.-.-.-.-.-.-.-.-.
+
 options:
 	# Permisos:
 	Permiso-helpop-receive: "essentials.helpop.receive" # Permiso de notificaciones [Ayuda de Helpop].
 	Permiso-chatmod: "chat.mod" # Permiso para chat de MODERADOR.
 	Permiso-chatadmin: "chat.op" # Permiso para chat OP.
 	
-	# Prefix's & Suffix Chat:
-	Prefix: &7[ &c!&7 ]
-	Prefix-msarg1: %{_tag}% &e» &c&l # Prefijo de mensaje sin respuesta.
-	Prefix-msstaff: &c&lTu > %{_tagplayer}% &f» &7 # Prefijo de mensaje sin respuesta.
-	Prefix-Recive: &4&l[Ayuda de OP] # Prefijo de helpop recibido.
-	Prefix-Staff: &4&l[Ayuda de OP] # Prefijo de ac enviado por Staff.
-	Prefix-Mod: &7[&5&lChatMOD&7] # Prefijo chat Mod.
-	Prefix-Admin: &7[&b&lChatOP&7] # Prefijo chat Admin.
-	Prefix-Spy: &7[&b&lHSpy&7] # Prefijo chat Admin.
-	Warn: &7[ &c! &7] # Prefijo warn, para mensajes error.
+	Prefix-msarg1: %{_player}% &e» &c&l # Prefijo de mensaje sin respuesta.
+	Prefix-msstaff: &c&lTu > %{_playerplayer}% &f» &7 # Prefijo de mensaje sin respuesta.
 	
 	# Mensajes:
 	Razon: "Mal uso de helpop!" # Razón de un mute sin especificar motivo.
@@ -24,316 +36,183 @@ options:
 	
 	# Tiempo:
 	Cooldown: 8 seconds #Tiempo sin mute!
-	
-	# Version:
-	Version: 24w3d28 &c[1.4.0]
-	
-	# Extras:
-	Colors: "&0" or "&1" or "&2" or "&3" or "&4" or "&5" or "&6" or "&7" or "&8" or "&9" or "&a" or "&b" or "&c" or "&d" or "&e" or "&f" or "&k" or "&l" or "&m" or "&n" or "&o" or "&r" # Bloqueo de uso de color en Helpop.
-
-#
-# Permisos:
-#	- chat.op // #!Permiso para chat OP.
-#	- chat.mod // #!Permiso para chat MOD.
-#	- essentials.helpop.receive // #!Permiso para recibir notificaciones de "[Ayuda de OP]" & Uso del comando /ms <Usuario> [Mensaje].
-#
 
 on load:
-	send "&8---------------------------------" to console
-	send "&fModificacion al comando &c[Ayuda de OP]" to console
-	send "&e- - - - - - ¡ACTIVADA! - - - - - -" to console
-	send "&b       Version: {@Version}" to console
-	send "&8---------------------------------" to console
-	stop
-	
-on unload:
-	send "&8---------------------------------" to console
-	send "&fModificacion al comando &c[Ayuda de OP]" to console
-	send "&9- - - - - ¡DESACTIVADA! - - - - -" to console
-	send "&b       Version: {@Version}" to console
-	send "&8---------------------------------" to console
-	stop
-#
-# JSON Options | Opciones JSON
-options:
-	debug: false
-	codes: 0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|k|l|m|n|o|r
-		
-	
-# JSON Extencion
-function removeColor(msg: text) :: text:
-    set {_m::*} to {_msg} split at ""
-    
-    set {_color-codes} to "{@codes}"
-    set {_colors::*} to {_color-codes} split at "|"
-    
-    set {_new} to ""
-    
-    loop {_m::*}:
-        set {_char} to loop-value
-        set {_prev} to the last character of {_new}
-        
-        if {_prev} is "&":
-        
-            loop {_colors::*}:
-            
-                if loop-value-2 is {_char}:
-                    set {_skip} to true
-                
-        if {_skip} is set:
-            delete {_skip}
-            
-        else:
-            set {_new} to "%{_new}%%{_char}%"
-                
-    return {_new}
+	set {_PathConfig} to "plugins/HelpopSk/Config.yml"
+	if file {_PathConfig} does not exist:
+		set yaml value "LangHelpopSk" from {_PathConfig} to "En"
+		# English
+		set yaml value "LangEnglish.Prefix" from {_PathConfig} to "&4&l[HelpOP]"
+		set yaml value "LangEnglish.OPChat" from {_PathConfig} to "&7[&9OPC&7]"
+		set yaml value "LangEnglish.ModChat" from {_PathConfig} to "&7[&5MD&7]"
+		set yaml value "LangEnglish.HSpy" from {_PathConfig} to "&7[&b&lHSpy&7]"
+		set yaml value "LangEnglish.Warn" from {_PathConfig} to "&7[&c&l!&7]"
+		# Spanish
+		set yaml value "LangSpanish.Prefix" from {_PathConfig} to "&4&l[Ayuda de OP]"
+		set yaml value "LangSpanish.OPChat" from {_PathConfig} to "&7[&9OPC&7]"
+		set yaml value "LangSpanish.ModChat" from {_PathConfig} to "&7[&5MD&7]"
+		set yaml value "LangSpanish.HSpy" from {_PathConfig} to "&7[&b&lHSpy&7]"
+		set yaml value "LangSpanish.Warn" from {_PathConfig} to "&7[&c&l!&7]"
 
-    
-function jsonColorize(msg: text, default-color: text = "&r") :: text:
-    set {_m::*} to {_msg} split at ""
-    
-    set {_color-codes} to "{@codes}"
-    set {_colors::*} to {_color-codes} split at "|"
-    
-    set {_color} to colored {_default-color}
-    set {_code} to the first character of {_color}
-    
-    set {_new} to ""
-    set {_skip} to 0
-    
-    loop amount of {_m::*} times:
-    
-        if {_skip} is more than or equal to 1:
-            subtract 1 from {_skip}
-            
-        else:
-            set {_char} to {_m::%loop-number%}
-            set {_next} to {_m::%loop-number + 1%}
-            
-            if {@debug} is true:
-                broadcast "&a[Character Check] &r%loop-number%: &7%{_char}% &r&onext: &8%{_next}% &r[%{_color}%color&r]"
-            
-            if {_char} is "&" or {_code}:
-            
-                if {@debug} is true:
-                    broadcast "&a[Color Check] &rFOUND: &o%{_char}%%{_next}% &7&m<--&7&o is it valid?"
-            
-                loop {_colors::*}:
-                
-                    if loop-value-2 is {_next}:
-                        set {_color} to "%{_color}%%{_code}%%{_next}%"
-                        
-                        if {_next} is "r":
-                            set {_color} to {_default-color}
-                            
-                        set {_new} to "%{_new}%%{_color}%"
-                        set {_skip} to 1
-                        
-                if {_skip} is less than or equal to 0:
-                    set {_new} to "%{_new}%%{_char}%"
-                
-            else if {_char} is " ":
-                set {_new} to "%{_new}% %{_color}%"
-            
-            else:
-                set {_new} to "%{_new}%%{_char}%"
-                
-    return {_new}
-    
+		wait 2 seconds
+		execute console command "sk reload HelpopSk" #!Important
 
-function jsonSanitize(msg: text) :: text:
-    if {@debug} is true:
-        broadcast "&a[Sanitize] &7&oSanitizing input..."
-        
-    set {_m::*} to {_msg} split at ""
-    
-    loop {_m::*}:
-    
-        if loop-value is """":
-            set {_m::%loop-index%} to "\""" # """
-            
-        else if loop-value is "\":
-            set {_m::%loop-index%} to "\\"
-            
-    set {_new} to join {_m::*} with ""
-    return {_new}
-    
+	else:
+		set {_getPathLang} to yaml value "LangHelpopSk" from {_PathConfig}
+		set {_getEncglishPrefix} to yaml value "LangEnglish.Prefix" from {_PathConfig}
+		set {_getSpanishPrefix} to yaml value "LangSpanish.Prefix" from {_PathConfig}
+		if {_getPathLang} is "En":
+			# Get value's
+			set {_getPrefix} to yaml value "LangEnglish.Prefix" from {_PathConfig}
+			set {_getOpChat} to yaml value "LangEnglish.OPChat" from {_PathConfig}
+			set {_getModChat} to yaml value "LangEnglish.ModChat" from {_PathConfig}
+			set {_getHspy} to yaml value "LangEnglish.HSpy" from {_PathConfig}
+			set {_getWarn} to yaml value "LangEnglish.Warn" from {_PathConfig}
+			# Set Value's from Global
+			set {Prefix} to {_getPrefix}
+			set {OpChat} to {_getOpChat}
+			set {ModChat} to {_getModChat}
+			set {Warn} to {_getWarn}
+			set {Lang} to {_getPathLang}
+			# Send properties load files
+			send "%{_getEncglishPrefix}% &7> &bI load the configuration in &eEnglish." to console
+		if {_getPathLang} is "Es":
+			# Get value's
+			set {_getPrefix} to yaml value "LangSpanish.Prefix" from {_PathConfig}
+			set {_getOpChat} to yaml value "LangSpanish.OPChat" from {_PathConfig}
+			set {_getModChat} to yaml value "LangSpanish.ModChat" from {_PathConfig}
+			set {_getHspy} to yaml value "LangSpanish.HSpy" from {_PathConfig}
+			set {_getWarn} to yaml value "LangSpanish.Warn" from {_PathConfig}
+			# Set Value's from Global
+			set {Prefix} to {_getPrefix}
+			set {OpChat} to {_getOpChat}
+			set {ModChat} to {_getModChat}
+			set {HSpy} to {_getHspy}
+			set {Warn} to {_getWarn}
+			set {Lang} to {_getPathLang}
+			# Send properties load files
+			send "%{_getSpanishPrefix}% &7> &bCargo la configuracion en &eEspañol." to console
 
-function jsonFormat(msg: text, color: boolean = true) :: text:
-    set {_m::*} to {_msg} split at "%nl%"
-    
-    set {_current} to 1
-    
-    loop {_m::*}:
-        if {_clusters::%{_current}%} is not set:
-            set {_clusters::%{_current}%} to ""
-        
-        if {_clusters::%{_current}%::text} is not set:
-            set {_clusters::%{_current}%::text} to jsonSanitize(loop-value)
-            
-        else:
-            set {_tag} to the first 4 characters of loop-value
-            set {_value} to subtext of loop-value from characters 5 to the length of loop-value
-            
-            if {_tag} is "ttp:":
-                set {_clusters::%{_current}%::tooltip} to jsonSanitize({_value})
-                
-            else if {_tag} is "cmd:":
-                set {_clusters::%{_current}%::command} to jsonSanitize({_value})
-                
-            else if {_tag} is "sgt:":
-                set {_clusters::%{_current}%::suggest} to jsonSanitize({_value})
-                
-            else if {_tag} is "url:":
-            
-                if {_value} doesn't contain "http://" or "https://":
-                    set {_value} to "http://%{_value}%"
-					
-                set {_clusters::%{_current}%::url} to jsonSanitize({_value})
-				
-                
-            else if {_tag} is "ins:":
-                set {_clusters::%{_current}%::insertion} to jsonSanitize({_value})
-                
-            else:
-                add 1 to {_current}
-                set {_clusters::%{_current}%::text} to jsonSanitize(loop-value)
-                set {_clusters::%{_current}%} to ""
-                
-            if {@debug} is true:
-                broadcast "&a[Tag Check] &3cluster:&b%{_current}% &8(&f&o%{_tag}%&8)"
-     
-    loop {_clusters::*}:
-    
-        if {@debug} is true:
-            broadcast "&a[Cluster Check] &7&oCluster ##%loop-index% exists."
-            
-        set {_i} to loop-index
-        
-        set {_text} to {_clusters::%{_i}%::text}
-        
-        if {_color} is true:
-            set {_text} to jsonColorize({_text})
-            
-        if {_json} is not set:
-            set {_json} to "{""text"":""%{_text}%"""
-        else:
-            set {_json} to "%{_json}%,{""text"":""%{_text}%"""
-        
-        if {_clusters::%{_i}%::tooltip} is set:
-        
-            if {_color} is true:
-                set {_tooltip} to jsonColorize({_clusters::%{_i}%::tooltip})
-                
-            else:
-                set {_tooltip} to {_clusters::%{_i}%::tooltip}
-                
-            set {_json} to "%{_json}%,""hoverEvent"":{""action"": ""show_text"",""value"": ""%{_tooltip}%""}"
-        
-        if {_clusters::%{_i}%::insertion} is set:
-            set {_json} to "%{_json}%,""insertion"":""%{_clusters::%{_i}%::insertion}%"",""obfuscated"":false"
-        
-        if {_clusters::%{_i}%::command} is set:
-            set {_clickable} to "%{_json}%,""clickEvent"":{""action"":""run_command"",""value"":""%{_clusters::%{_i}%::command}%""}"
-            
-        if {_clusters::%{_i}%::suggest} is set:
-            set {_clickable} to "%{_json}%,""clickEvent"":{""action"": ""suggest_command"",""value"": ""%{_clusters::%{_i}%::suggest}%""}"
-            
-        if {_clusters::%{_i}%::url} is set:
-            set {_clickable} to "%{_json}%,""clickEvent"":{""action"": ""open_url"",""value"": ""%{_clusters::%{_i}%::url}%""}"
-            
-        if {_clickable} is set:
-            set {_json} to "%{_clickable}%}"
-            delete {_clickable}
-            
-        else:
-            set {_json} to "%{_json}%}"
-    
-    return "{""text"":"""", ""extra"":[%{_json}%]}"
-    
 
-function json(to: text, msg: text, color: boolean = true):
-    set {_msg} to jsonFormat({_msg}, {_color})
-    execute console command "/tellraw %{_to}% %{_msg}%"
-    
-    if {@debug} is true:
-        set {_player} to {_to} parsed as offline player
-        if {_player} is online:
-            send uncolored {_msg} to {_player}
-            
+# Function setTime
+function setTime(t: text) :: text:
+	set {_tm} to {_t}
+	set {_numbers::*} to {_tm} split at "d"
+	if {_tm} contains "d":
+		set {_day} to {_numbers::1} parsed as numbers
+		replace "%{_day}%d" with "" in {_tm}
 
-function jsonBroadcast(msg: text, color: boolean = true):
-    json("@a", {_msg}, {_color})
-	
-#	
-# Fin Funciones
-# End Functions
-#	
+	set {_numbers::*} to {_tm} split at "h"
+	if {_tm} contains "h":
+		set {_hour} to {_numbers::1} parsed as numbers
+		replace "%{_hour}%h" with "" in {_tm}
 
-#
-# Comando "/helpop" modificado.
-#
+	set {_numbers::*} to {_tm} split at "m"
+	if {_tm} contains "m":
+		set {_min} to {_numbers::1} parsed as numbers
+		replace "%{_min}%m" with "" in {_tm}
 
+	set {_numbers::*} to {_tm} split at "s"
+	if {_tm} contains "s":
+		set {_seg} to {_numbers::1} parsed as numbers
+		replace "%{_seg}%s" with "" in {_tm}
+
+	if {_day} is set:
+		add "%{_day}% days" to {_final::*}
+
+	if {_hours} is set:
+		add "%{_hours}% hours" to {_final::*}
+
+	if {_min} is set:
+		add "%{_min}% minutes" to {_final::*}
+
+	if {_seg} is set:
+		add "%{_seg}% seconds" to {_final::*}
+
+	set {_result} to "%{_final::*}%"
+	replace all "," with "" in {_result}
+
+	return {_result}
+
+# Function ModifyTime
+function modifyTime(data: text) :: text:
+	replace all " " with "" in {_data}
+	replace "minutes" and "minute" with "min" in {_data}
+	replace "seconds" and "second" with "seg" in {_data}
+	replace "hours" and "hour" with "hs" in {_data}
+	replace "and" with ":" in {_data}
+	return {_data}
+# Function getTag
+Function getTag(p: player) :: text:
+	set {_getTag} to "%{_p}'s prefix%%{_p}%"
+	replace "&" with "§" in {_getTag}
+	replace all "§k" with "" in {_getTag}
+	replace all "|" and "!" and "¡" with "" in {_getTag}
+	return {_getTag}
+# Function Capitalation
+function capitalation(text: text, char: int) :: text:
+	set {_Text} to last (length of {_Text} - {_char}) characters of {_Text}
+	set {_TextUpper} to the first character of {_Text} in upper case
+	set {_Text} to last (length of {_Text} - 1) characters of {_Text}
+	return "%{_TextUpper}%%{_Text}%"
+
+# Modify command "/helpop":
 command /helpop [<text>]:
 	trigger:
 		if arg 1 is not set:
-			send "{@Warn} &cNecesitas colocar tu duda o reporte."
+			send "%{Warn}% &cNecesitas colocar tu duda o reporte."
 			stop
 		else if arg 1 contains "&":
-			send "{@Warn} &c&lNo puedes usar colores en la ayuda para el staff."
+			send "%{Warn}% &c&lNo puedes usar colores en la ayuda para el staff."
 			stop
 		else:
 			if {HMute::%player%} is set:
 				if {HMute::%player%} > 1 second:
 					set {_time} to "%{HMute::%player%}%"
-					replace every " and " with ":" in {_time}
-					replace " year" and " years" with "y" in {_time}
-					replace " week" and " weeks" with "w" in {_time}
-					replace " day" and " days" with "d" in {_time}
-					replace " hour" and " hours" and " hours " and "hs" with "h" in {_time}
-					replace " minute" and " minutes" and " minutes " and "ms" with "m" in {_time}
-					replace " second" and " seconds" with "" in {_time}
-					send ""
-					send "{@Prefix} &cEstas silenciado de Helpop por: &d%{_time}%"
-					send "{@Prefix} &cMotivo: &6&l%{Mutearg3::%player%}%"
-					send ""
-					stop
+					add "%player%" to yaml list "Users.Muted.%player's uuid%" from "plugins/HelpopSk/Muted.yml"
+					if {Lang} is "En":
+						send ""
+						send "%{Warn}% &cYou are muted from Helpop for: &d%{_time}%"
+						send "%{Warn}% &cReason: &6&l%{Mutearg3::%player%}%"
+						send ""
+						stop
+					if {Lang} is "Es":
+						send ""
+						send "%{Warn}% &cEstas silenciado de Helpop por: &d%{_time}%"
+						send "%{Warn}% &cMotivo: &6&l%{Mutearg3::%player%}%"
+						send ""
+						stop
 			else:
 				set {_waited} to difference between {mute.%player%.lastused} and now
 				if {_waited} is less than {@Cooldown}:
 					set {_time} to "%difference between {@Cooldown} and {_waited}%"
-					replace " seconds" and " second" with "s" in {_time}
-					replace " minutes" and " minute" with "m" in {_time}
-					replace " and " with ":" in {_time}
+					# replace " seconds" and " second" with "s" in {_time}
+					# replace " minutes" and " minute" with "m" in {_time}
+					# replace " and " with ":" in {_time}
 					send ""
-					send "{@Prefix} &cEspera antes de usar Helpop de nuevo: &d%{_time}%"
+					send "%{Warn}% &cEspera antes de usar Helpop de nuevo: &d%{_time}%"
 					send ""
 					stop
 				send ""
-				send "{@Prefix}  &aEl staff ya fue notificado con tu consulta o reporte."
+				send "%{Warn}%  &aEl staff ya fue notificado con tu consulta o reporte."
 				send ""
 				loop all players:
-					if loop-player has permission {@Permiso-helpop-receive}:
-						set {_tag} to player's display name
-						replace "&" with "§" in {_tag}
-						delete {HMute::%player%}
-						delete {Mutearg3::%player%}
+					if loop-player has permission "essentials.helpopp.recive":
+						delete {HMute::%player%} and {Mutearg3::%player%}
+						set {_tag} to getTag(player)
+						set {_message} to capitalation(arg 1, 0)
 						set {mute.%player%.lastused} to now
 						play sound "entity.player.levelup" with pitch 6 to loop-player
 						if arg 1 contains "http://" or "https://" or "www" or ".com" or ".net" or ".org" or ".info" or ".es":
-							send "{@Prefix-Recive} &a&l%{_tag}% &7» &f&l%arg-1%" to loop-player
+							send "%{Prefix}% &a&l%{_player}% &7» &f&l%arg-1%" to loop-player
 						else:
-							json("%loop-player%", "{@Prefix-Recive}%nl%ttp:&a[Clic] &fPara silenciar a &b%player%%nl%cmd:/__opens %player% %nl%&7[&6TP&7]%nl%ttp:&a[Clic] &fPara ir con &b%player%%nl%cmd:/tp %player% %nl%&7[&dM&7]%nl%ttp:&a[Clic] &fPara ir enviar mensaje a: &b%player%%nl%sgt:/h %player% %nl%&a&l %{_tag}% &7» &f&l%arg-1% %nl%ttp:&a[Clic] &fpara responder a: &b%player%&f!%nl%sgt:%player% ")
+							send formatted "<ttp:&a[Clic] &fPara silenciar a &b%player%><cmd:/__opens %player%>%{Prefix}%<reset><ttp:&a[Clic] &fPara ir con &b%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset><ttp:&a[Clic] &fPara ir enviar mensaje a: &b%player%><sgt:/h %player% >&7[&d&lM&7]<reset><ttp:&a[Clic] &fpara responder a: &b%player%><sgt:%player% > %{_tag}% &7» &f&l%{_message}%<reset>" to loop-player
 							
-# 
-# Interfaz, al usar los mensajes interactivos "[Ayuda de OP]"
-#
-							
+# Interfaz, al usar los mensajes interactivos "[Ayuda de OP]"							
 command /__opens [<offline player>]:
 	trigger:
-		if player has permission {@Permiso-helpop-receive}:
-			set {_tag} to "%player's prefix%%player's suffix%%player%"
-			replace "&" with "§" in {_tag}
+		if player has permission "essentials.helpopp.recive":
+			set {_tag} to getTag(player)
 			open chest with 1 rows named "&8&l- - - SANCIONES &8&l- - -" to player
 			wait 5 ticks
 			format slot 0 of player with lime stained glass pane named "&aSilenciar por 5 Minutos" with lore "%nl%&7Sancionar por 5 Min.%nl%&7a %arg 1%&7.%nl%%nl%&7- &eMotivo: &6&l{@Razon-Inside}" to close then run [execute player command "hmute %arg-1% 5m"]
@@ -347,15 +226,11 @@ command /__opens [<offline player>]:
 			format slot 6 of player with gray dye named "&cDesilenciar" with lore "%nl%&7Remover silencio.%nl%&7a %arg 1%&7." to close then run [execute player command "hunmute %arg-1%"]
 			
 			format slot 8 of player with book named "&9Información" with lore "%nl%&7Ver información de%nl%&7sanciones para:%nl%%arg 1%&7." to close then run [execute player command "htime %arg-1%"]
-		
-
-#						
+							
 # Establece el tiempo de mute | #! NO MODIFICAR!						
-#						
-
 command /hmute [<offline player>] [<text>] [<text>]:
 	trigger:
-		if player has permission {@Permiso-helpop-receive}:
+		if player has permission "essentials.helpopp.recive":
 			if arg 1 is set:
 				if arg 2 is set:
 					set {mute.%arg-1%.lastused} to now
@@ -364,76 +239,55 @@ command /hmute [<offline player>] [<text>] [<text>]:
 					set {Mutearg3::%arg-1%} to arg 3
 					if {Mutearg3::%arg-1%} is not set:
 						set {Mutearg3::%arg-1%} to {@Razon}
-					if {_arg2} contains "s":
-						replace "s" with "" in {_arg2}
-						set {HMute::%arg-1%} to "%{_arg2}% seconds" parsed as timespan
-						send "{@Prefix} &a%player% &7Te ha sido silenciado de {@Prefix-Recive} &7Motivo: &c&l%{Mutearg3::%arg-1%}% &e&l%{_arg2}% &eSegundo(s)." to arg 1
-						loop all players:
-							if loop-player has permission {@Permiso-helpop-receive}:
-								json("%loop-player%", "{@Prefix} &b%player%&7 &7Ha silenciado &7de %nl%{@Prefix-Recive}%nl%ttp:&aClic para mas información%nl%cmd:/__opens %arg-1% %nl% &7a &c&l%arg-1% &7Motivo &a&l%{Mutearg3::%arg-1%}% &7por &e&l%{_arg2}% &eSegundo(s).")
-					else if {_arg2} contains "m":
-						replace "m" with "" in {_arg2}
-						set {HMute::%arg-1%} to "%{_arg2}% minutes" parsed as timespan
-						send "{@Prefix} &a%player% &7Te ha sido silenciado de {@Prefix-Recive} &7Motivo &c&l%{Mutearg3::%arg-1%}% &e&l%{_arg2}% &eMinuto(s)." to arg 1
-						loop all players:
-							if loop-player has permission {@Permiso-helpop-receive}:
-								json("%loop-player%", "{@Prefix} &b%player%&7 &7Ha silenciado &7de %nl%{@Prefix-Recive}%nl%ttp:&aClic para mas información%nl%cmd:/__opens %arg-1% %nl% &7a &c&l%arg-1% &7Motivo &a&l%{Mutearg3::%arg-1%}% &7por &e&l%{_arg2}% &eMinuto(s).")
-					else if {_arg2} contains "h":
-						replace "h" with "" in {_arg2}
-						set {HMute::%arg-1%} to "%{_arg2}% hours" parsed as timespan
-						send "{@Prefix} &a%player% &7Te ha sido silenciado de {@Prefix-Recive} &7Motivo &c&l%{Mutearg3::%arg-1%}% &e&l%{_arg2}% &eHora(s)." to arg 1
-						loop all players:
-							if loop-player has permission {@Permiso-helpop-receive}:
-								json("%loop-player%", "{@Prefix} &b%player%&7 &7Ha silenciado &7de %nl%{@Prefix-Recive}%nl%ttp:&aClic para mas información%nl%cmd:/__opens %arg-1% %nl% &7a &c&l%arg-1% &7Motivo &a&l%{Mutearg3::%arg-1%}% &7por &e&l%{_arg2}% &eHora(s).")
+					if {_arg2} is set:
+						set {_clearData} to setTime({_arg2})
+						set {_setData} to modifyTime({_clearData})
+						set {HMute::%arg-1%} to {_clearData} parsed as timespan
+						send "%{Warn}% &a%player% &7Te ha sido silenciado de %{Prefix}% &7Motivo: &c&l%{Mutearg3::%arg-1%}% &e&l%{_setData}%." to arg 1
+						
 					else:
-						send "{@Warn} &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
+						send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
 						stop
 				else:
-					send "{@Warn} &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
-					send "&c&lTiempos: &fs=Segundos, m=Minutos, h=Horas"
+					send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
+					send "&c&lTiempos: &fs=Segundos, m=Minutos, h=Horas, d=Dias"
 					stop
 			else:
-				send "{@Warn} &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
+				send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
 				stop
 		else:
-			send "{@Warn} &cNo tienes permisos para usar este comando."
+			send "%{Warn}% &cNo tienes permisos para usar este comando."
 			stop
 			
-#
-# Remueve el mute dado | #!NO MODIFICAR!
-#
-			
+# Remueve el mute dado | #!NO MODIFICAR!		
 command /hunmute [<offline player>]:
 	trigger:
-		if player has permission {@Permiso-helpop-receive}:
+		if player has permission "essentials.helpopp.recive":
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
 					delete {HMute::%arg-1%}
 					set {mute.%arg-1%.lastused} to now
-					send "{@Prefix} &c&l%arg-1% &ehas sido Desilenciado de Helpop!." to arg 1
+					send "%{Warn}% &c&l%arg-1% &ehas sido Desilenciado de Helpop!." to arg 1
 					loop all players:
-						if loop-player has permission {@Permiso-helpop-receive}:
-							send "{@Prefix} &c&l%arg-1% &7Fué desilenciado de Helpop &7Por &b%player%&7." to loop-player
+						if loop-player has permission "essentials.helpopp.recive":
+							send "%{Warn}% &c&l%arg-1% &7Fué desilenciado de Helpop &7Por &b%player%&7." to loop-player
 				else:
 					send ""
-					send "{@Warn} &c&l%arg-1% &ano esta Silenciado de Helpop."
+					send "%{Warn}% &c&l%arg-1% &ano esta Silenciado de Helpop."
 					send ""
 					stop
 			else:
-				send "{@Warn} &b/hunmute <usuario>."
+				send "%{Warn}% &b/hunmute <usuario>."
 				stop
 		else:
-			send "{@Warn} &cNo tienes permisos para usar este comando."
+			send "%{Warn}% &cNo tienes permisos para usar este comando."
 			stop		
 			
-#
 # Información del mute dado | #! NO MODIFICAR!
-#
-		
 command /htiempo [<offline player>]:
 	aliases: htime
 	trigger:
-		if player has permission {@Permiso-helpop-receive}:
+		if player has permission "essentials.helpopp.recive":
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
 					set {_time} to "%{HMute::%arg-1%}%"
@@ -445,44 +299,37 @@ command /htiempo [<offline player>]:
 					replace " minute" and " minutes" and " minutes " and "ms" with "m" in {_time}
 					replace " second" and " seconds" with "" in {_time}
 					send ""
-					send "{@Warn} &cTiempo restante de &e&l%arg-1%&c: &b%{_time}%"
-					send "{@Warn} &cRazón: &6&l%{Mutearg3::%arg-1%}%"
+					send "%{Warn}% &cTiempo restante de &e&l%arg-1%&c: &b%{_time}%"
+					send "%{Warn}% &cRazón: &6&l%{Mutearg3::%arg-1%}%"
 					send ""
 					stop
 				else:
 					send ""
-					send "{@Warn} &c&l%arg-1% &ano esta Silenciado de Helpop."
+					send "%{Warn}% &c&l%arg-1% &ano esta Silenciado de Helpop."
 					send ""
 					stop
 			else:
-				send "{@Warn} &cNo se pudo encontrar."
-				send "{@Warn} &b/htiempo &7<&eusuario&7>."
+				send "%{Warn}% &cNo se pudo encontrar."
+				send "%{Warn}% &b/htiempo &7<&eusuario&7>."
 				stop
 		else:
-			send "{@Warn} &cNo tienes permisos para usar este comando."
+			send "%{Warn}% &cNo tienes permisos para usar este comando."
 			stop
 			
-#
 # Chat de Ops | #! NO MODIFICAR!
-#
-			
 command /a [<text>]:
 	trigger:
 		if player has permission {@Permiso-chatadmin}:
 			if arg 1 is set:
 				loop all players:
 					if loop-player has permission {@Permiso-chatadmin}:
-						set {_tag} to "%player's prefix%&b%player%"
-						replace "&" with "§" in {_tag}
-						send "{@Prefix-Admin} %{_tag}% &c» &a&l%arg-1%" to loop-player
+						set {_tag} to getTag(player)
+						send "%{OpChat}% %{_tag}% &c» &9&l%arg-1%" to loop-player
 			else:
-				send "{@Warn} &aNecesitas establecer un mensaje!."
+				send "%{Warn}% &aNecesitas establecer un mensaje!."
 				stop
 				
-#
 # Chat de Moderadores | #! NO MODIFICAR!
-#
-					
 command /mod [<text>]:
 	aliases: fm, md, cm
 	trigger:
@@ -490,35 +337,31 @@ command /mod [<text>]:
 			if arg 1 is set:
 				loop all players:
 					if loop-player has permission {@Permiso-chatmod}:
-						set {_tag} to "%player's prefix%&b%player%"
-						replace "&" with "§" in {_tag}
-						send "{@Prefix-Mod} %{_tag}% &c» &d&l%arg-1%" to loop-player
+						set {_tag} to getTag(player)
+						send "%{ModChat}% %{_tag}% &c» &5&l%arg-1 in kebab case%" to loop-player
 			else:
-				send "{@Warn} &aNecesitas establecer un mensaje!."
+				send "%{Warn}% &aNecesitas establecer un mensaje!."
 				stop
 				
-#
 # Comando de Mensaje Privado de [Ayuda de OP] | #! Solo modificar lo señalado.
-#
-
 command /helpopmsg [<player>] [<text>]:
 	aliases: hmsg, helpopm, hm, h # Si causa conflicto se puede quitar algun ALIAS.
 	trigger:
-		if player has permission {@Permiso-helpop-receive}:
+		if player has permission "essentials.helpopp.recive":
 			if arg 1 is "%player%":
-				send "{@Warn} &cNo puedes enviarte un mensaje tu solo."
+				send "%{Warn}% &cNo puedes enviarte un mensaje tu solo."
 				stop
 			if arg 1 is online:
 				if arg 2 is set:
-					set {_tag} to "%player's prefix%&b%player%"
-					set {_tagplayer} to "%arg-1's prefix%&b%arg-1%"
-					replace "&" with "§" in {_tag}
-					replace "&" with "§" in {_tagplayer}
+					# set {_player} to "%player's prefix%&b%player%"
+					# set {_playerplayer} to "%arg-1's prefix%&b%arg-1%"
+					# replace "&" with "§" in {_player}
+					# replace "&" with "§" in {_playerplayer}
 					send "{@Prefix-msstaff}&l%arg-2%"
 					send "" to arg 1
 					play sound "entity.fox.sniff" to arg 1
 					send "{@Prefix-msarg1}&b&l%arg-2%" to arg 1
-					json("%arg 1%", "&b&oResponde este mensaje con un &3[Clic Aqui]&b o usa &3/helpop&b.%nl%ttp:&a[Clic] &fPara responder al staff%nl%sgt:/helpop ")
+					# json("%arg 1%", "&b&oResponde este mensaje con un &3[Clic Aqui]&b o usa &3/helpop&b.%nl%ttp:&a[Clic] &fPara responder al staff%nl%sgt:/helpop ")
 					send "" to arg 1
 					loop all players:
 						if loop-player has permission {@Permiso-chatadmin}:
@@ -527,15 +370,15 @@ command /helpopmsg [<player>] [<text>]:
 								loop {_Ops::*}:
 									if loop-value-2 is not sender:
 										send "" to loop-value-2
-										send "{@Prefix-Spy} &d%player% &5> &9%arg-1% &7> &f%arg-2%" to loop-value-2
+										send "%{HSpy}% &d%player% &5> &9%arg-1% &7> &f%arg-2%" to loop-value-2
 										send "" to loop-value-2
 									
 				else:
-					send "{@Warn} &cNecesitas establecer un mensaje."
+					send "%{Warn}% &cNecesitas establecer un mensaje."
 					stop
 			else:
-				send "{@Warn} &cJugador no encontrado!"
-				send "{@Warn} &b/h &7<&eusuario&7> &7<&emensaje&7>."
+				send "%{Warn}% &cJugador no encontrado!"
+				send "%{Warn}% &b/h &7<&eusuario&7> &7<&emensaje&7>."
 				stop
 		else:
 			send "&cNo tienes permisos para usar este comando."
@@ -546,25 +389,22 @@ command /helpopmsgspy:
 	trigger:
 		if {hmsg::%player%} is not set:
 			set {hmsg::%player%} to true
-			send "&a&lOkey! {@Prefix-Spy} &aActivado"
+			send "&a&lOkey! %{HSpy}% &aActivado"
 			stop
 		else:
 			delete {hmsg::%player%}
-			send "&c&lOkey! {@Prefix-Spy} &cDesactivado"
+			send "&c&lOkey! %{HSpy}% &cDesactivado"
 			stop
 			
-#
 # Bloqueo, accion extra al utilizar /ac | #! ¡CUIDADO!... Muy Delicado.
-#
-			
 on command:
 	if executor is player:
 		if command is equal to "eamsg" or "amsg" or "eac" or "ehelpop" or "ac":
-			if player does not have permission {@Permiso-helpop-receive}:
+			if player does not have permission "essentials.helpopp.recive":
 				cancel event
 				set {_ac} to full command
 				if {_ac} is "ac" or "helpop":
-					send "{@Warn} &cNecesitas escribir tu duda o reporte!"
+					send "%{Warn}% &cNecesitas escribir tu duda o reporte!"
 					stop
 				else:
 					replace "ac " and "helpop " with "" in {_ac}
@@ -574,33 +414,36 @@ on command:
 				cancel event
 				set {_ac} to full command
 				if {_ac} is "ac":
-					send "{@Warn} &cNo colocaste un mensaje!"
-					send "{@Warn} &bSilenciar a un jugador: &e/hmute."
-					send "{@Warn} &bEstado de un jugador: &e/htiempo."
-					send "{@Warn} &bEnviar mensaje sin respuesta: &e/helpopmsg."
+					send "%{Warn}% &cNo colocaste un mensaje!"
+					send "%{Warn}% &bSilenciar a un jugador: &e/hmute."
+					send "%{Warn}% &bEstado de un jugador: &e/htiempo."
+					send "%{Warn}% &bEnviar mensaje sin respuesta: &e/helpopmsg."
 					if player has permission {@Permiso-chatmod}:
-						send "{@Warn} &aCanal de chat &5[MOD]: &e/md <mensaje>"
+						send "%{Warn}% &aCanal de chat &5[MOD]: &e/md <mensaje>"
 					if player has permission {@Permiso-chatadmin}:
-						send "{@Warn} &aCanal de chat &7[&bOP&7]: &e/a <mensaje>"
-						send "{@Warn} &aMensajes de Helpop Spy: &e/hspy."
+						send "%{Warn}% &aCanal de chat &7[&bOP&7]: &e/a <mensaje>"
+						send "%{Warn}% &aMensajes de Helpop Spy: &e/hspy."
 					stop
 				else:
 					if {_ac} contains "&":
-						send "{@Warn} &cNo puedes usar colores (&) en este comando."
+						send "%{Warn}% &cNo puedes usar colores (&) en este comando."
 						stop
 					else:
-						replace every "&{@codes}" with "" in {_ac}
-						set {_ac} to last (length of {_ac} - 3) characters of {_ac}
-						set {_tag} to "%player's prefix%&c%player%"
-						replace "&" with "§" in {_tag}
+						
+						set {_tag} to getTag(player)
+						set {_ac} to capitalation({_ac}, 3)
+						
 						loop all players:
-							if loop-player has permission {@Permiso-helpop-receive}:
-								send "{@Prefix-Staff}%{_tag}% &7» &f&l%{_ac}%" to loop-player
+							if loop-player has permission "essentials.helpopp.recive":
 								
-#
+								if {Lang} is "En":
+									send formatted "%{Prefix}%<ttp:&a[Clic] &fGo with &9%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset> <ttp:&2● &a[Clicked] &fMention &9%player%&f by chat staff><sgt:/ac %player% >%{_tag}%<reset> &7» <ttp:&2● &a[Clicked] &fPaste what appears here in your chat><sgt:%{_acUpper}%>&f&l%{_ac}%<reset>" to loop-player
+
+								if {Lang} is "Es":
+
+									send formatted "%{Prefix}%<ttp:&a[Clic] &fPara ir con &9%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset> <ttp:&a[Clic] &fMenciona por chat staff a &9%player%><sgt:/ac %player% >%{_tag}%<reset> &7» <ttp:&a[Clic] &fPega en tu chat lo que aparece aquí><sgt:%{_ac}%>&f&l%{_ac}%<reset>" to loop-player
+								
 # Evenco de los canales de Chat | #! Modificar de ser necesario!
-#
-			
 on chat:
 	if {staffchat::%player%} is set:
 		cancel event
@@ -615,10 +458,7 @@ on chat:
 		execute player command "a %message%"
 		stop
 		
-#
 # Cooldown global | #!No modificar!
-#
-		
 every 1 seconds:
 	loop all players:
 		if loop-player is online:
@@ -629,12 +469,10 @@ every 1 seconds:
 				if {HMute::%loop-player%} >= 2 second:
 					remove 1 second from {HMute::%loop-player%}
 					
-#			
-# Auto vanish | #!Solo OPs			
-#			
+# Auto vanish | #!Solo OPs
 on join:
 	if player has permission "sv.auto":
-		wait 15 ticks
+		wait 5 ticks
 		execute player command "v on"
 		set {hmsg::%player%} to true
 		stop
