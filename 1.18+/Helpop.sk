@@ -186,9 +186,7 @@ command /helpop [<text>]:
 				set {_waited} to difference between {mute.%player%.lastused} and now
 				if {_waited} is less than {@Cooldown}:
 					set {_time} to "%difference between {@Cooldown} and {_waited}%"
-					# replace " seconds" and " second" with "s" in {_time}
-					# replace " minutes" and " minute" with "m" in {_time}
-					# replace " and " with ":" in {_time}
+					set {_time} to modifyTime({_time})
 					send ""
 					send "%{Warn}% &cEspera antes de usar Helpop de nuevo: &d%{_time}%"
 					send ""
@@ -291,13 +289,7 @@ command /htiempo [<offline player>]:
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
 					set {_time} to "%{HMute::%arg-1%}%"
-					replace every " and " with ":" in {_time}
-					replace " year" and " years" with "y" in {_time}
-					replace " week" and " weeks" with "w" in {_time}
-					replace " day" and " days" with "d" in {_time}
-					replace " hour" and " hours" and " hours " and "hs" with "h" in {_time}
-					replace " minute" and " minutes" and " minutes " and "ms" with "m" in {_time}
-					replace " second" and " seconds" with "" in {_time}
+					set {_time} to modifyTime({_time})
 					send ""
 					send "%{Warn}% &cTiempo restante de &e&l%arg-1%&c: &b%{_time}%"
 					send "%{Warn}% &cRazón: &6&l%{Mutearg3::%arg-1%}%"
@@ -353,35 +345,41 @@ command /helpopmsg [<player>] [<text>]:
 				stop
 			if arg 1 is online:
 				if arg 2 is set:
-					# set {_player} to "%player's prefix%&b%player%"
-					# set {_playerplayer} to "%arg-1's prefix%&b%arg-1%"
-					# replace "&" with "§" in {_player}
-					# replace "&" with "§" in {_playerplayer}
+					set {_player} to getTag(player)
 					send "{@Prefix-msstaff}&l%arg-2%"
-					send "" to arg 1
 					play sound "entity.fox.sniff" to arg 1
 					send "{@Prefix-msarg1}&b&l%arg-2%" to arg 1
-					# json("%arg 1%", "&b&oResponde este mensaje con un &3[Clic Aqui]&b o usa &3/helpop&b.%nl%ttp:&a[Clic] &fPara responder al staff%nl%sgt:/helpop ")
-					send "" to arg 1
+					if {Lang} is "En":
+						send formatted "" and "<ttp:&a[Clicked] &fTo reply to the staff><sgt:/helpop >&b&oReply to this message with a &3[Click Here] &bor use &3/helpop&b.<reset>" and "" to arg 1
+					if {Lang} is "Es":
+						send formatted "" and "<ttp:&a[Clic] &fPara responder al staff><sgt:/helpop >&b&oResponde este mensaje con un &3[Clic Aqui]&b o usa &3/helpop&b.<reset>" and "" to arg 1
 					loop all players:
 						if loop-player has permission {@Permiso-chatadmin}:
 							if {hmsg::%loop-player%} is true:
 								set {_Ops::*} to loop-player
 								loop {_Ops::*}:
 									if loop-value-2 is not sender:
-										send "" to loop-value-2
 										send "%{HSpy}% &d%player% &5> &9%arg-1% &7> &f%arg-2%" to loop-value-2
-										send "" to loop-value-2
 									
 				else:
-					send "%{Warn}% &cNecesitas establecer un mensaje."
+					if {Lang} is "En":
+						send "%{Warn}% &cYou need to set a message."
+					if {Lang} is "Es":
+						send "%{Warn}% &cNecesitas establecer un mensaje."
 					stop
 			else:
-				send "%{Warn}% &cJugador no encontrado!"
-				send "%{Warn}% &b/h &7<&eusuario&7> &7<&emensaje&7>."
+				if {Lang} is "En":
+					send "%{Warn}% &cPlayer not found!"
+					send "%{Warn}% &b/h &7<&eUser&7> &7<&eMessage&7>."
+				if {Lang} is "Es":
+					send "%{Warn}% &cJugador no encontrado!"
+					send "%{Warn}% &b/h &7<&eUsuario&7> &7<&eMensaje&7>."
 				stop
 		else:
-			send "&cNo tienes permisos para usar este comando."
+			if {Lang} is "En":
+				send "&cYou do not have permissions to use this command."
+			if {Lang} is "Es":
+				send "&cNo tienes permisos para usar este comando."
 			stop
 			
 command /helpopmsgspy:
@@ -389,11 +387,17 @@ command /helpopmsgspy:
 	trigger:
 		if {hmsg::%player%} is not set:
 			set {hmsg::%player%} to true
-			send "&a&lOkey! %{HSpy}% &aActivado"
+			if {Lang} is "En":
+				send "{@Pre}&a&lOkey! %{HSpy}% &aEnable"
+			if {Lang} is "Es":	
+				send "{@Pre}&a&lOkey! %{HSpy}% &aActivado"
 			stop
 		else:
 			delete {hmsg::%player%}
-			send "&c&lOkey! %{HSpy}% &cDesactivado"
+			if {Lang} is "En":
+				send "{@Pre}&c&lUps! %{HSpy}% &cDisable"
+			if {Lang} is "Es":
+				send "{@Pre}&c&lUps! %{HSpy}% &cDesactivado"
 			stop
 			
 # Bloqueo, accion extra al utilizar /ac | #! ¡CUIDADO!... Muy Delicado.
@@ -404,7 +408,10 @@ on command:
 				cancel event
 				set {_ac} to full command
 				if {_ac} is "ac" or "helpop":
-					send "%{Warn}% &cNecesitas escribir tu duda o reporte!"
+					if {Lang} is "En":
+						send "%{Warn}% &cYou need to write your question or report!"
+					if {Lang} is "Es":
+						send "%{Warn}% &cNecesitas escribir tu duda o reporte!"
 					stop
 				else:
 					replace "ac " and "helpop " with "" in {_ac}
