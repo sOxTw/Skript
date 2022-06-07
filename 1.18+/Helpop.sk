@@ -101,49 +101,40 @@ function setTime(t: text) :: text:
 	if {_tm} contains "d":
 		set {_day} to {_numbers::1} parsed as numbers
 		replace "%{_day}%d" with "" in {_tm}
-
 	set {_numbers::*} to {_tm} split at "h"
 	if {_tm} contains "h":
-		set {_hour} to {_numbers::1} parsed as numbers
-		replace "%{_hour}%h" with "" in {_tm}
-
+		set {_hours} to {_numbers::1} parsed as numbers
+		replace "%{_hours}%h" with "" in {_tm}
 	set {_numbers::*} to {_tm} split at "m"
 	if {_tm} contains "m":
 		set {_min} to {_numbers::1} parsed as numbers
 		replace "%{_min}%m" with "" in {_tm}
-
 	set {_numbers::*} to {_tm} split at "s"
 	if {_tm} contains "s":
 		set {_seg} to {_numbers::1} parsed as numbers
 		replace "%{_seg}%s" with "" in {_tm}
-
 	if {_day} is set:
 		add "%{_day}% days" to {_final::*}
-
 	if {_hours} is set:
 		add "%{_hours}% hours" to {_final::*}
-
 	if {_min} is set:
 		add "%{_min}% minutes" to {_final::*}
-
 	if {_seg} is set:
 		add "%{_seg}% seconds" to {_final::*}
-
 	set {_result} to "%{_final::*}%"
 	replace all "," with "" in {_result}
-
 	return {_result}
-
 # Function ModifyTime
 function modifyTime(data: text) :: text:
 	replace all " " with "" in {_data}
-	replace "minutes" and "minute" with "min" in {_data}
-	replace "seconds" and "second" with "seg" in {_data}
-	replace "hours" and "hour" with "hs" in {_data}
+	replace "days" and "day" with "d:" in {_data}
+	replace "minutes" and "minute" with "m" in {_data}
+	replace "seconds" and "second" with "s" in {_data}
+	replace "hours" and "hour" with "h" in {_data}
 	replace "and" with ":" in {_data}
 	return {_data}
 # Function getTag
-Function getTag(p: player) :: text:
+function getTag(p: player) :: text:
 	set {_getTag} to "%{_p}'s prefix%%{_p}%"
 	replace "&" with "§" in {_getTag}
 	replace all "§k" with "" in {_getTag}
@@ -155,6 +146,92 @@ function capitalation(text: text, char: int) :: text:
 	set {_TextUpper} to the first character of {_Text} in upper case
 	set {_Text} to last (length of {_Text} - 1) characters of {_Text}
 	return "%{_TextUpper}%%{_Text}%"
+# Function helpopGetSetInfo
+function helpopGetSetInfo(p:player, opt: text, user: offline player, langOpt: text):
+	if {_langOpt} is "En":
+		set {nameOfInventory} to "&8&l- - - ADV &8&l- - -"
+		set {_nameOfItem01} to "&a⌚ &l5&a minute penalty."
+		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 5 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_nameOfItem02} to "&2⌚ &l10&2 minute penalty."
+		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 10 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_nameOfItem03} to "&e⌚ &l15&e minute penalty."
+		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 15 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_nameOfItem04} to "&6⌚ &l20&6 minute penalty."
+		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 20 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_nameOfItem05} to "&5⌚ &l30&5 minute penalty."
+		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 30 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_nameOfItem06} to "&c⌚ &l1&c hour sanction."
+		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 1 hour.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+	if {_langOpt} is "Es":
+		set {nameOfInventory} to "&8&l- - - SANCIONES &8&l- - -"
+		set {_nameOfItem01} to "&a⌚ Sancion de &l5&a Minutos"
+		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 5 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_nameOfItem02} to "&2⌚ Sancion de &l10&2 Minutos"
+		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 10 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_nameOfItem03} to "&e⌚ Sancion de &l15&e Minutos"
+		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 15 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_nameOfItem04} to "&6⌚ Sancion de &l20&6 Minutos"
+		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 20 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_nameOfItem05} to "&5⌚ Sancion de &l30&5 Minutos"
+		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 30 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_nameOfItem06} to "&c⌚ Sancion de &l1&c Hora"
+		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 1 hora.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+	set {_InvHelpop} to a new chest inventory with 5 row with name "%{nameOfInventory}%"
+	wait 5 ticks
+	if {_opt} is "SET":
+		set slot 0 of {_InvHelpop} to lime stained glass pane named "%{_nameOfItem01}%" with lore "%{_loreOfItem01}%"
+		set slot 1 of {_InvHelpop} to green stained glass pane named "%{_nameOfItem02}%" with lore "%{_loreOfItem02}%"
+		set slot 2 of {_InvHelpop} to yellow stained glass pane named "%{_nameOfItem03}%" with lore "%{_loreOfItem03}%"
+		set slot 3 of {_InvHelpop} to orange stained glass pane named "%{_nameOfItem04}%" with lore "%{_loreOfItem04}%"
+		set slot 4 of {_InvHelpop} to purple stained glass pane named "%{_nameOfItem05}%" with lore "%{_loreOfItem05}%"
+		set slot 5 of {_InvHelpop} to red stained glass pane named "%{_nameOfItem06}%" with lore "%{_loreOfItem06}%"
+		set slot 6 of {_InvHelpop} to gray dye named "&cDesilenciar" with lore "%nl%&7Remover silencio.%nl%&7a %{_user}%&7."
+		open {_InvHelpop} to {_p}
+
+function replaceClicked(t: text) :: text:
+	replace "%nl%⁃ " with "" in {_t}
+	replace all " " with "," in {_t}
+	replace all "&b" and "&n" with "" in {_t}
+	set {_user::*} to {_t} split at ","
+	set {_return} to {_user::4}
+	return {_return}
+
+on inventory click:
+	if name of event-inventory is "%{nameOfInventory}%":
+		set {_user} to "%lore of event-slot%"
+		if index of event-slot = 0:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 5m"
+
+		if index of event-slot = 1:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 10m"
+
+		if index of event-slot = 2:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 15m"
+
+		if index of event-slot = 3:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 20m"
+
+		if index of event-slot = 4:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 25m"
+
+		if index of event-slot = 5:
+			cancel event
+			set {_name} to replaceClicked("%{_user}%")
+			execute player command "hmute %{_name}% 1h"
+
+		else:
+			cancel event
+
 
 # Modify command "/helpop":
 command /helpop [<text>]:
@@ -168,7 +245,7 @@ command /helpop [<text>]:
 		else:
 			if {HMute::%player%} is set:
 				if {HMute::%player%} > 1 second:
-					set {_time} to "%{HMute::%player%}%"
+					set {_time} to modifyTime("%{HMute::%player%}%")
 					add "%player%" to yaml list "Users.Muted.%player's uuid%" from "plugins/HelpopSk/Muted.yml"
 					if {Lang} is "En":
 						send ""
@@ -207,28 +284,17 @@ command /helpop [<text>]:
 							send formatted "<ttp:&a[Clic] &fPara silenciar a &b%player%><cmd:/__opens %player%>%{Prefix}%<reset><ttp:&a[Clic] &fPara ir con &b%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset><ttp:&a[Clic] &fPara ir enviar mensaje a: &b%player%><sgt:/h %player% >&7[&d&lM&7]<reset><ttp:&a[Clic] &fpara responder a: &b%player%><sgt:%player% > %{_tag}% &7» &f&l%{_message}%<reset>" to loop-player
 							
 # Interfaz, al usar los mensajes interactivos "[Ayuda de OP]"							
-command /__opens [<offline player>]:
+command /advhelpop [<text>] [<offline player>]:
 	trigger:
 		if player has permission "essentials.helpopp.recive":
-			set {_tag} to getTag(player)
-			open chest with 1 rows named "&8&l- - - SANCIONES &8&l- - -" to player
-			wait 5 ticks
-			format slot 0 of player with lime stained glass pane named "&aSilenciar por 5 Minutos" with lore "%nl%&7Sancionar por 5 Min.%nl%&7a %arg 1%&7.%nl%%nl%&7- &eMotivo: &6&l{@Razon-Inside}" to close then run [execute player command "hmute %arg-1% 5m"]
+			helpopGetSetInfo(player, arg 1, arg 2, {Lang})
 			
-			format slot 1 of player with yellow stained glass pane named "&eSilenciar por 20 Minutos" with lore "%nl%&7Sancionar por 20 Min.%nl%&7a %arg 1%&7.%nl%%nl%&7- &eMotivo: &6&l{@Razon-Inside}" to close then run [execute player command "hmute %arg-1% 20m"]
-			
-			format slot 2 of player with orange stained glass pane named "&6Silenciar por 30 Minutos" with lore "%nl%&7Sancionar por 30 Min.%nl%&7a %arg 1%&7.%nl%%nl%&7- &eMotivo: &6&l{@Razon-Inside}" to close then run [execute player command "hmute %arg-1% 30m"]
-			
-			format slot 3 of player with red stained glass pane named "&4Silenciar por 1 Hora" with lore "%nl%&7Sancionar por 1 Hora.%nl%&7a %arg 1%&7.%nl%%nl%&7- &eMotivo: &6&l{@Razon-Inside}" to close then run [execute player command "hmute %arg-1% 1h"]
-			
-			format slot 6 of player with gray dye named "&cDesilenciar" with lore "%nl%&7Remover silencio.%nl%&7a %arg 1%&7." to close then run [execute player command "hunmute %arg-1%"]
-			
-			format slot 8 of player with book named "&9Información" with lore "%nl%&7Ver información de%nl%&7sanciones para:%nl%%arg 1%&7." to close then run [execute player command "htime %arg-1%"]
 							
 # Establece el tiempo de mute | #! NO MODIFICAR!						
 command /hmute [<offline player>] [<text>] [<text>]:
 	trigger:
 		if player has permission "essentials.helpopp.recive":
+			wait 2 ticks
 			if arg 1 is set:
 				if arg 2 is set:
 					set {mute.%arg-1%.lastused} to now
@@ -241,7 +307,7 @@ command /hmute [<offline player>] [<text>] [<text>]:
 						set {_clearData} to setTime({_arg2})
 						set {_setData} to modifyTime({_clearData})
 						set {HMute::%arg-1%} to {_clearData} parsed as timespan
-						send "%{Warn}% &a%player% &7Te ha sido silenciado de %{Prefix}% &7Motivo: &c&l%{Mutearg3::%arg-1%}% &e&l%{_setData}%." to arg 1
+						send "%{Warn}% &a%player% &7Te ha silenciado de %{Prefix}% &7Motivo: &c&l%{Mutearg3::%arg-1%}% &7por &e&l%{_setData}%." to arg 1
 						
 					else:
 						send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
@@ -388,16 +454,16 @@ command /helpopmsgspy:
 		if {hmsg::%player%} is not set:
 			set {hmsg::%player%} to true
 			if {Lang} is "En":
-				send "{@Pre}&a&lOkey! %{HSpy}% &aEnable"
+				send "%{Pre}%&a&lOkey! %{HSpy}% &aEnable"
 			if {Lang} is "Es":	
-				send "{@Pre}&a&lOkey! %{HSpy}% &aActivado"
+				send "%{Pre}%&a&lOkey! %{HSpy}% &aActivado"
 			stop
 		else:
 			delete {hmsg::%player%}
 			if {Lang} is "En":
-				send "{@Pre}&c&lUps! %{HSpy}% &cDisable"
+				send "%{Pre}%&c&lUps! %{HSpy}% &cDisable"
 			if {Lang} is "Es":
-				send "{@Pre}&c&lUps! %{HSpy}% &cDesactivado"
+				send "%{Pre}%&c&lUps! %{HSpy}% &cDesactivado"
 			stop
 			
 # Bloqueo, accion extra al utilizar /ac | #! ¡CUIDADO!... Muy Delicado.
