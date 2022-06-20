@@ -213,7 +213,10 @@ function helpopGetSetInfo(p:player, opt: text, user: offline player, langOpt: te
 		set slot 4 of {_InvHelpop} to purple stained glass pane named "%{_nameOfItem05}%" with lore "%{_loreOfItem05}%"
 		set slot 5 of {_InvHelpop} to red stained glass pane named "%{_nameOfItem06}%" with lore "%{_loreOfItem06}%"
 		set slot 7 of {_InvHelpop} to glowing book named "%{_nameOfItem07}%" with lore "%{_loreOfItem07}%"
-		set slot 8 of {_InvHelpop} to gray dye named "&c✖ Desilenciar" with lore "%nl%&7→ Remover silencio.%nl%&7a %{_user}%&7.%nl%%nl%&f&lMotivo:%nl%&b⁃❱ &e%{_SplitReason::1}%%nl%&b⌚&o%{_SplitReason::2}%"
+		if {Mutearg3::%{_user}%} is set:
+			set slot 8 of {_InvHelpop} to glowing gray dye named "&c✖ Desilenciar" with lore "%nl%&7→ Remover silencio.%nl%&7a %{_user}%&7.%nl%%nl%&f&lMotivo:%nl%&b⁃❱ &e%{_SplitReason::1}%%nl%&b⌚&o%{_SplitReason::2}%"
+		if {Mutearg3::%{_user}%} is not set:
+			set slot 8 of {_InvHelpop} to gray dye named "&c✖ Desilenciar" with lore "&a&n%{_user}% &ano esta silenciado."
 		open {_InvHelpop} to {_p}
 function StoryInv(p: player, user: text):
 	set {_mutesGet::*} to yaml list "Users.%{_user} parsed as player's uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
@@ -302,44 +305,58 @@ function replaceClicked(t: text, n: number) :: text:
 		replace "&f◈ " with "" in {_t}
 		replace "&7Historial de " and "'s History" with "" in {_t}
 		return {_t}
+	if {_n} = 3:
+		if {_t} contains "no esta":
+			replace "&a&n" and "&ano esta silenciado." with "" in {_t}
+			set {_return} to {_t}
+		else:
+			replace all "," and "." and "&7" with "" in {_t}
+			replace all " " with "," in {_t}
+			set {_list::*} to {_t} split at ","
+			broadcast "%{_list::6}%"
+			set {_return} to {_list::6}
+		return {_return}
 on inventory click:
+	set {_userl} to "%lore of event-slot%"
+	set {_usern} to name of event-slot
 	if name of event-inventory is "%{StoryInventoryName}%":
 		cancel event
 		if index of event-slot = 8, 17, 26, 35, 44 or 53:
-			cancel event
-			execute player command "advhelpop SET %{User::%player%}%"
-			delete {User::%player%}
+			set {_name} to replaceClicked("%{_userl}%", 3)
+			execute player command "advhelpop SET %{_name}%"
 	if name of event-inventory is "%{nameOfInventory}%":
-		set {_userl} to "%lore of event-slot%"
-		set {_usern} to name of event-slot
+		cancel event
 		if index of event-slot = 0:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 5m %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 1:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 10m %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 2:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 15m %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 3:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 20m %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 4:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 25m %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 5:
-			cancel event
 			set {_name} to replaceClicked("%{_userl}%", 1)
 			execute player command "hmute %{_name}% 1h %{Reason}%"
+			execute player command "advhelpop SET %{User::%player%}%"
 		if index of event-slot = 7:
 			set {_name} to replaceClicked("%{_usern}%", 2)
-			cancel event
 			StoryInv(player, {_name})
+		if index of event-slot = 8:
+			set {_name} to replaceClicked("%{_userl}%", 3)
+			execute player command "/hunmute %{_name}%"
+			execute player command "advhelpop SET %{_name}%"
 		else:
 			cancel event
 command /helpop [<text>]:
@@ -429,9 +446,9 @@ command /hunmute [<offline player>]:
 		if player has permission "essentials.helpop.recive":
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
-					delete {HMute::%arg-1%}
+					delete {HMute::%arg-1%} and {Mutearg3::%arg 1%}
 					set {mute.%arg-1%.lastused} to now
-					send "%{Warn}% &c&l%arg-1% &ehas sido Desilenciado de Helpop!." to arg 1
+					send "%{Warn}% &c&l%arg-1% &ehaz sido Desilenciado de Helpop!." to arg 1
 					loop all players:
 						if loop-player has permission "essentials.helpop.recive":
 							send "%{Warn}% &c&l%arg-1% &7Fué desilenciado de Helpop &7Por &b%player%&7." to loop-player
