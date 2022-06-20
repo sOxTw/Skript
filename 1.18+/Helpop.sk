@@ -30,10 +30,6 @@ options:
 	Prefix-msarg1: %{_player}% &e» &c&l # Prefijo de mensaje sin respuesta.
 	Prefix-msstaff: &c&lTu > %{_playerplayer}% &f» &7 # Prefijo de mensaje sin respuesta.
 	
-	# Mensajes:
-	Razon: "Mal uso de helpop!" # Razón de un mute sin especificar motivo.
-	Razon-Inside: Mal uso de helpop! # Razón de un mute sin especificar motivo sin "".
-	
 	# Tiempo:
 	Cooldown: 8 seconds #Tiempo sin mute!
 
@@ -47,16 +43,16 @@ on load:
 		set yaml value "LangEnglish.ModChat" from {_PathConfig} to "&7[&5MD&7]"
 		set yaml value "LangEnglish.HSpy" from {_PathConfig} to "&7[&b&lHSpy&7]"
 		set yaml value "LangEnglish.Warn" from {_PathConfig} to "&7[&c&l!&7]"
+		set yaml value "LangEnglish.Reason" from {_PathConfig} to "Improper use of §4§l[HelpOP]"
 		# Spanish
 		set yaml value "LangSpanish.Prefix" from {_PathConfig} to "&4&l[Ayuda de OP]"
 		set yaml value "LangSpanish.OPChat" from {_PathConfig} to "&7[&9OPC&7]"
 		set yaml value "LangSpanish.ModChat" from {_PathConfig} to "&7[&5MD&7]"
 		set yaml value "LangSpanish.HSpy" from {_PathConfig} to "&7[&b&lHSpy&7]"
 		set yaml value "LangSpanish.Warn" from {_PathConfig} to "&7[&c&l!&7]"
-
+		set yaml value "LangSpanish.Reason" from {_PathConfig} to "Uso indebido de §4§l[Ayuda de OP]"
 		wait 2 seconds
 		execute console command "sk reload HelpopSk" #!Important
-
 	else:
 		set {_getPathLang} to yaml value "LangHelpopSk" from {_PathConfig}
 		set {_getEncglishPrefix} to yaml value "LangEnglish.Prefix" from {_PathConfig}
@@ -68,12 +64,7 @@ on load:
 			set {_getModChat} to yaml value "LangEnglish.ModChat" from {_PathConfig}
 			set {_getHspy} to yaml value "LangEnglish.HSpy" from {_PathConfig}
 			set {_getWarn} to yaml value "LangEnglish.Warn" from {_PathConfig}
-			# Set Value's from Global
-			set {Prefix} to {_getPrefix}
-			set {OpChat} to {_getOpChat}
-			set {ModChat} to {_getModChat}
-			set {Warn} to {_getWarn}
-			set {Lang} to {_getPathLang}
+			set {_getReason} to yaml value "LangEnglish.Reason" from {_PathConfig}
 			# Send properties load files
 			send "%{_getEncglishPrefix}% &7> &bI load the configuration in &eEnglish." to console
 		if {_getPathLang} is "Es":
@@ -83,18 +74,17 @@ on load:
 			set {_getModChat} to yaml value "LangSpanish.ModChat" from {_PathConfig}
 			set {_getHspy} to yaml value "LangSpanish.HSpy" from {_PathConfig}
 			set {_getWarn} to yaml value "LangSpanish.Warn" from {_PathConfig}
-			# Set Value's from Global
-			set {Prefix} to {_getPrefix}
-			set {OpChat} to {_getOpChat}
-			set {ModChat} to {_getModChat}
-			set {HSpy} to {_getHspy}
-			set {Warn} to {_getWarn}
-			set {Lang} to {_getPathLang}
+			set {_getReason} to yaml value "LangSpanish.Reason" from {_PathConfig}
 			# Send properties load files
 			send "%{_getSpanishPrefix}% &7> &bCargo la configuracion en &eEspañol." to console
-
-
-# Function setTime
+		# Set Value's from Global
+		set {Prefix} to {_getPrefix}
+		set {OpChat} to {_getOpChat}
+		set {ModChat} to {_getModChat}
+		set {HSpy} to {_getHspy}
+		set {Warn} to {_getWarn}
+		set {Lang} to {_getPathLang}
+		set {Reason} to {_getReason}
 function setTime(t: text) :: text:
 	set {_tm} to {_t}
 	set {_numbers::*} to {_tm} split at "d"
@@ -124,7 +114,6 @@ function setTime(t: text) :: text:
 	set {_result} to "%{_final::*}%"
 	replace all "," with "" in {_result}
 	return {_result}
-# Function ModifyTime
 function modifyTime(data: text) :: text:
 	replace all " " with "" in {_data}
 	replace "days" and "day" with "d:" in {_data}
@@ -133,49 +122,87 @@ function modifyTime(data: text) :: text:
 	replace "hours" and "hour" with "h" in {_data}
 	replace "and" with ":" in {_data}
 	return {_data}
-# Function getTag
 function getTag(p: player) :: text:
 	set {_getTag} to "%{_p}'s prefix%%{_p}%"
 	replace "&" with "§" in {_getTag}
 	replace all "§k" with "" in {_getTag}
 	replace all "|" and "!" and "¡" with "" in {_getTag}
 	return {_getTag}
-# Function Capitalation
 function capitalation(text: text, char: int) :: text:
 	set {_Text} to last (length of {_Text} - {_char}) characters of {_Text}
 	set {_TextUpper} to the first character of {_Text} in upper case
 	set {_Text} to last (length of {_Text} - 1) characters of {_Text}
-	return "%{_TextUpper}%%{_Text}%"
-# Function helpopGetSetInfo
+	if {_Text} is set:
+		return "%{_TextUpper}%%{_Text}%"
+	else:
+		return "%{_TextUpper}%"
+function StoryMuted(p: player) :: text:
+	set {_mutesGet::*} to yaml list "Users.%{_p}'s uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
+	set {_more} to size of {_mutesGet::*} +1
+	set {_rest} to size of {_mutesGet::*} +1
+	set {_loop} to -1
+	loop {_mutesGet::*}:
+		set {_value} to {_mutesGet::%{_rest}%}
+		replace "-" with "&7⌚&o" in {_value}
+		add 1 to {_loop}
+		remove 1 from {_rest}
+
+		if {_loop} = 6:
+			exit loop
+		else:
+			set {_dataNumber%{_loop}%} to "&b❱ &e%{_value}%"
+	remove {_loop} from {_rest}
+	if {Lang} is "En":
+		set {_more} to "&c&oand %{_more}% more... Click so see"
+	if {Lang} is "Es":
+		set {_more} to "&c&oY %{_more}% mas... Clic para ver"
+	if {_loop} > 1:
+		if {_dataNumber5} is set:
+			return "%{_dataNumber1}%%nl%%{_dataNumber2}%%nl%%{_dataNumber3}%%nl%%{_dataNumber4}%%nl%%{_dataNumber5}%%nl%%{_more}%"
+		if {_dataNumber5} is not set:
+			return "%{_dataNumber1}%%nl%%{_dataNumber2}%%nl%%{_dataNumber3}%%nl%%{_dataNumber4}%"
+		if {_dataNumber4} is not set:
+			return "%{_dataNumber1}%%nl%%{_dataNumber2}%%nl%%{_dataNumber3}%"
+		if {_dataNumber3} is not set:
+			return "%{_dataNumber1}%%nl%%{_dataNumber2}%"
+		if {_dataNumber2} is not set:
+			return "%{_dataNumber1}%"
 function helpopGetSetInfo(p:player, opt: text, user: offline player, langOpt: text):
+	set {_getMuted} to StoryMuted({_p})
+	set {_ListOfMuted::*} to yaml list "Users.%{_p}'s uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
+	set {_SplitReason::*} to last element of {_ListOfMuted::*} split at "-"
 	if {_langOpt} is "En":
-		set {nameOfInventory} to "&8&l- - - ADV &8&l- - -"
+		set {nameOfInventory} to "&8   &l- - - SANCTIONS &8&l- - -"
 		set {_nameOfItem01} to "&a⌚ &l5&a minute penalty."
-		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 5 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 5 minutes.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
 		set {_nameOfItem02} to "&2⌚ &l10&2 minute penalty."
-		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 10 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 10 minutes.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
 		set {_nameOfItem03} to "&e⌚ &l15&e minute penalty."
-		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 15 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 15 minutes.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
 		set {_nameOfItem04} to "&6⌚ &l20&6 minute penalty."
-		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 20 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 20 minutes.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
 		set {_nameOfItem05} to "&5⌚ &l30&5 minute penalty."
-		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 30 minutes.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 30 minutes.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
 		set {_nameOfItem06} to "&c⌚ &l1&c hour sanction."
-		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 1 hour.%nl%%nl%&d➥&l Reason: &7{@Razon-Inside}"
+		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b will be silenced%nl%&bfor 1 hour.%nl%%nl%&d➥&l Reason: &7%{Reason}%"
+		set {_nameOfItem07} to "&f◈ &7%{_user}%'s History"
+		set {_loreOfItem07} to "%{_getMuted}%"
 	if {_langOpt} is "Es":
-		set {nameOfInventory} to "&8&l- - - SANCIONES &8&l- - -"
+		set {nameOfInventory} to "&8   &l- - - SANCIONES &8&l- - -"
 		set {_nameOfItem01} to "&a⌚ Sancion de &l5&a Minutos"
-		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 5 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem01} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 5 minutos.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
 		set {_nameOfItem02} to "&2⌚ Sancion de &l10&2 Minutos"
-		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 10 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem02} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 10 minutos.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
 		set {_nameOfItem03} to "&e⌚ Sancion de &l15&e Minutos"
-		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 15 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem03} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 15 minutos.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
 		set {_nameOfItem04} to "&6⌚ Sancion de &l20&6 Minutos"
-		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 20 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem04} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 20 minutos.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
 		set {_nameOfItem05} to "&5⌚ Sancion de &l30&5 Minutos"
-		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 30 minutos.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem05} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 30 minutos.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
 		set {_nameOfItem06} to "&c⌚ Sancion de &l1&c Hora"
-		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 1 hora.%nl%%nl%&d➥&l Motivo: &7{@Razon-Inside}"
+		set {_loreOfItem06} to "%nl%&b⁃ &n%{_user}%&b Sera silenciado%nl%&bpor 1 hora.%nl%%nl%&d➥&l Motivo: &7%{Reason}%"
+		set {_nameOfItem07} to "&f◈ &7Historial de %{_user}%"
+		set {_loreOfItem07} to "%{_getMuted}%"
 	set {_InvHelpop} to a new chest inventory with 5 row with name "%{nameOfInventory}%"
 	wait 5 ticks
 	if {_opt} is "SET":
@@ -185,55 +212,136 @@ function helpopGetSetInfo(p:player, opt: text, user: offline player, langOpt: te
 		set slot 3 of {_InvHelpop} to orange stained glass pane named "%{_nameOfItem04}%" with lore "%{_loreOfItem04}%"
 		set slot 4 of {_InvHelpop} to purple stained glass pane named "%{_nameOfItem05}%" with lore "%{_loreOfItem05}%"
 		set slot 5 of {_InvHelpop} to red stained glass pane named "%{_nameOfItem06}%" with lore "%{_loreOfItem06}%"
-		set slot 6 of {_InvHelpop} to gray dye named "&cDesilenciar" with lore "%nl%&7Remover silencio.%nl%&7a %{_user}%&7."
+		set slot 7 of {_InvHelpop} to glowing book named "%{_nameOfItem07}%" with lore "%{_loreOfItem07}%"
+		set slot 8 of {_InvHelpop} to gray dye named "&c✖ Desilenciar" with lore "%nl%&7→ Remover silencio.%nl%&7a %{_user}%&7.%nl%%nl%&f&lMotivo:%nl%&b⁃❱ &e%{_SplitReason::1}%%nl%&b⌚&o%{_SplitReason::2}%"
 		open {_InvHelpop} to {_p}
-
-function replaceClicked(t: text) :: text:
-	replace "%nl%⁃ " with "" in {_t}
-	replace all " " with "," in {_t}
-	replace all "&b" and "&n" with "" in {_t}
-	set {_user::*} to {_t} split at ","
-	set {_return} to {_user::4}
-	return {_return}
-
+function StoryInv(p: player, user: text):
+	set {_mutesGet::*} to yaml list "Users.%{_user} parsed as player's uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
+	set {User::%{_p}%} to {_user}
+	set {_size} to size of {_mutesGet::*}
+	if {Lang} is "En":
+		set {_name} to "&0◈ &8%{_user}%'s History &0◈"
+	if {Lang} is "Es":
+		set {_name} to "&0◈ &8Historial de %{_user}% &0◈"
+	set {StoryInventoryName} to {_name}
+	if {_size} <= 9:
+		set {_InvMuteds} to a new chest inventory with 1 row with name "%{_name}%"
+		set {_inSet} to 8
+	if {_size} <= 18:
+		if {_inSet} is not set:
+			set {_InvMuteds} to a new chest inventory with 2 row with name "%{_name}%"
+			set {_inSet} to 17
+	if {_size} <= 27:
+		if {_inSet} is not set:
+			set {_InvMuteds} to a new chest inventory with 3 row with name "%{_name}%"
+			set {_inSet} to 26
+	if {_size} <= 36:
+		if {_inSet} is not set:
+			set {_InvMuteds} to a new chest inventory with 4 row with name "%{_name}%"
+			set {_inSet} to 35
+	if {_size} <= 45:
+		if {_inSet} is not set:
+			set {_InvMuteds} to a new chest inventory with 5 row with name "%{_name}%"
+			set {_inSet} to 44
+	if {_size} >= 54:
+		if {_inSet} is not set:
+			set {_InvMuteds} to a new chest inventory with 6 row with name "%{_name}%"
+			set {_inSet} to 53
+	wait 5 ticks
+	loop {_mutesGet::*}:
+		set {_index} to loop-index parsed as number -1
+		set {_value::*} to loop-value split at "-"
+		set {_lore} to first (length of {_value::1} - 1) characters of {_value::1}
+		set {_name} to last (length of {_value::2} - 1) characters of {_value::2}
+		set slot {_index} of {_InvMuteds} to paper named "&b⌚ %{_name}%" with lore "&e❱ %{_lore}%"
+	set slot {_inSet} of {_InvMuteds} to iron nugget named "&cExit to menu..."
+	open {_InvMuteds} to {_p}
+function UsersMuted(p: player):
+	set {_Keys::*} to yaml nodes with keys "Users" from "plugins/HelpopSk/MuteData/Users.yml"
+	set {_size} to size of {_Keys::*}
+	if {Lang} is "En":
+		set {_name} to "&0◈ &8Active mute &0◈"
+	if {Lang} is "Es":
+		set {_name} to "&0◈ &8Silencio activo &0◈"
+	if {_size} <= 9:
+		set {_InvGetMuteds} to a new chest inventory with 1 row with name "%{_name}%"
+		set {_inSet} to true
+	if {_size} <= 18:
+		if {_inSet} is not set:
+			set {_InvGetMuteds} to a new chest inventory with 2 row with name "%{_name}%"
+			set {_inSet} to true
+	if {_size} <= 27:
+		if {_inSet} is not set:
+			set {_InvGetMuteds} to a new chest inventory with 3 row with name "%{_name}%"
+			set {_inSet} to true
+	wait 5 ticks
+	set {_index} to 0
+	loop {_Keys::*}:
+		set {_getID} to "%loop-value%" parsed as offline player's uuid
+		set {_setNamePlayer} to {_getID} parsed as offline players
+		if {HMute::%{_setNamePlayer}%} is set:
+			broadcast "&e&l:%{_setNamePlayer}% &7» &c%{_index}%"
+			set {_LoreTime} to modifyTime("%{HMute::%{_setNamePlayer}%}%")
+			set {_LoreData} to {Mutearg3::%{_setNamePlayer}%}
+			set {_Details} to "%nl%&2⌚ &a&n%{_LoreTime}%%nl%%nl%&3&l❱ &b%{_LoreData}%"
+			set slot {_index} of {_InvGetMuteds} to ("%{_setNamePlayer}%" parsed as offline player)'s skull named "&a&l%{_setNamePlayer}%" with lore "%{_Details}%"
+			add 1 to {_index}
+	open {_InvGetMuteds} to {_p}
+command /test:
+	trigger:
+		UsersMuted(player)
+function replaceClicked(t: text, n: number) :: text:
+	if {_n} = 1:
+		replace "%nl%⁃ " with "" in {_t}
+		replace all " " with "," in {_t}
+		replace all "&b" and "&n" with "" in {_t}
+		set {_user::*} to {_t} split at ","
+		set {_return} to {_user::4}
+		return {_return}
+	if {_n} = 2:
+		replace "&f◈ " with "" in {_t}
+		replace "&7Historial de " and "'s History" with "" in {_t}
+		return {_t}
 on inventory click:
+	if name of event-inventory is "%{StoryInventoryName}%":
+		cancel event
+		if index of event-slot = 8, 17, 26, 35, 44 or 53:
+			cancel event
+			execute player command "advhelpop SET %{User::%player%}%"
+			delete {User::%player%}
 	if name of event-inventory is "%{nameOfInventory}%":
-		set {_user} to "%lore of event-slot%"
+		set {_userl} to "%lore of event-slot%"
+		set {_usern} to name of event-slot
 		if index of event-slot = 0:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 5m"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 5m %{Reason}%"
 		if index of event-slot = 1:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 10m"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 10m %{Reason}%"
 		if index of event-slot = 2:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 15m"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 15m %{Reason}%"
 		if index of event-slot = 3:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 20m"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 20m %{Reason}%"
 		if index of event-slot = 4:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 25m"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 25m %{Reason}%"
 		if index of event-slot = 5:
 			cancel event
-			set {_name} to replaceClicked("%{_user}%")
-			execute player command "hmute %{_name}% 1h"
-
+			set {_name} to replaceClicked("%{_userl}%", 1)
+			execute player command "hmute %{_name}% 1h %{Reason}%"
+		if index of event-slot = 7:
+			set {_name} to replaceClicked("%{_usern}%", 2)
+			cancel event
+			StoryInv(player, {_name})
 		else:
 			cancel event
-
-
-# Modify command "/helpop":
 command /helpop [<text>]:
 	trigger:
 		if arg 1 is not set:
@@ -246,7 +354,6 @@ command /helpop [<text>]:
 			if {HMute::%player%} is set:
 				if {HMute::%player%} > 1 second:
 					set {_time} to modifyTime("%{HMute::%player%}%")
-					add "%player%" to yaml list "Users.Muted.%player's uuid%" from "plugins/HelpopSk/Muted.yml"
 					if {Lang} is "En":
 						send ""
 						send "%{Warn}% &cYou are muted from Helpop for: &d%{_time}%"
@@ -272,7 +379,7 @@ command /helpop [<text>]:
 				send "%{Warn}%  &aEl staff ya fue notificado con tu consulta o reporte."
 				send ""
 				loop all players:
-					if loop-player has permission "essentials.helpopp.recive":
+					if loop-player has permission "essentials.helpop.recive":
 						delete {HMute::%player%} and {Mutearg3::%player%}
 						set {_tag} to getTag(player)
 						set {_message} to capitalation(arg 1, 0)
@@ -281,34 +388,30 @@ command /helpop [<text>]:
 						if arg 1 contains "http://" or "https://" or "www" or ".com" or ".net" or ".org" or ".info" or ".es":
 							send "%{Prefix}% &a&l%{_player}% &7» &f&l%arg-1%" to loop-player
 						else:
-							send formatted "<ttp:&a[Clic] &fPara silenciar a &b%player%><cmd:/__opens %player%>%{Prefix}%<reset><ttp:&a[Clic] &fPara ir con &b%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset><ttp:&a[Clic] &fPara ir enviar mensaje a: &b%player%><sgt:/h %player% >&7[&d&lM&7]<reset><ttp:&a[Clic] &fpara responder a: &b%player%><sgt:%player% > %{_tag}% &7» &f&l%{_message}%<reset>" to loop-player
-							
-# Interfaz, al usar los mensajes interactivos "[Ayuda de OP]"							
+							send formatted "<ttp:&a[Clic] &fPara silenciar a &b%player%><cmd:/advhelpop SET %player%>%{Prefix}%<reset><ttp:&a[Clic] &fPara ir con &b%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset><ttp:&a[Clic] &fPara ir enviar mensaje a: &b%player%><sgt:/h %player% >&7[&d&lM&7]<reset><ttp:&a[Clic] &fpara responder a: &b%player%><sgt:%player% > %{_tag}% &7» &f&l%{_message}%<reset>" to loop-player
 command /advhelpop [<text>] [<offline player>]:
 	trigger:
-		if player has permission "essentials.helpopp.recive":
-			helpopGetSetInfo(player, arg 1, arg 2, {Lang})
-			
-							
-# Establece el tiempo de mute | #! NO MODIFICAR!						
+		if player has permission "essentials.helpop.recive":
+			helpopGetSetInfo(player, arg 1, arg 2, {Lang})						
 command /hmute [<offline player>] [<text>] [<text>]:
 	trigger:
-		if player has permission "essentials.helpopp.recive":
+		if player has permission "essentials.helpop.recive":
 			wait 2 ticks
 			if arg 1 is set:
 				if arg 2 is set:
-					set {mute.%arg-1%.lastused} to now
-					delete {Mutearg3::%arg-1%}
+					set {mute.%arg 1%.lastused} to now
+					delete {Mutearg3::%arg 1%}
 					set {_arg2} to arg 2
-					set {Mutearg3::%arg-1%} to arg 3
-					if {Mutearg3::%arg-1%} is not set:
-						set {Mutearg3::%arg-1%} to {@Razon}
+					set {Mutearg3::%arg 1%} to capitalation(arg 3, 0)
 					if {_arg2} is set:
 						set {_clearData} to setTime({_arg2})
 						set {_setData} to modifyTime({_clearData})
-						set {HMute::%arg-1%} to {_clearData} parsed as timespan
-						send "%{Warn}% &a%player% &7Te ha silenciado de %{Prefix}% &7Motivo: &c&l%{Mutearg3::%arg-1%}% &7por &e&l%{_setData}%." to arg 1
-						
+						set {HMute::%arg 1%} to {_clearData} parsed as timespan
+						send "%{Warn}% &a%player% &7Te ha silenciado de %{Prefix}% &7por &e&l%{_setData}%. &7Motivo: &c&l%{Mutearg3::%arg 1%}%" to arg 1
+						add "%{Mutearg3::%arg 1%}% - %now%" to yaml list "Users.%arg 1's uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
+						loop all players:
+							if loop-player has permission "essentials.helpop.recive":
+								send formatted "%{Warn}% &c&l%player% &fsilencio a &6%arg 1% &fde %{Prefix}% &fpor &a%{Mutearg3::%arg 1%}%"  to loop-player
 					else:
 						send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
 						stop
@@ -320,38 +423,31 @@ command /hmute [<offline player>] [<text>] [<text>]:
 				send "%{Warn}% &e/hmute &7<&eusuario&7> &7<&etiempo&7> &7[&erazón&7]."
 				stop
 		else:
-			send "%{Warn}% &cNo tienes permisos para usar este comando."
-			stop
-			
-# Remueve el mute dado | #!NO MODIFICAR!		
+			send "%{Warn}% &cNo tienes permisos para usar este comando."		
 command /hunmute [<offline player>]:
 	trigger:
-		if player has permission "essentials.helpopp.recive":
+		if player has permission "essentials.helpop.recive":
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
 					delete {HMute::%arg-1%}
 					set {mute.%arg-1%.lastused} to now
 					send "%{Warn}% &c&l%arg-1% &ehas sido Desilenciado de Helpop!." to arg 1
 					loop all players:
-						if loop-player has permission "essentials.helpopp.recive":
+						if loop-player has permission "essentials.helpop.recive":
 							send "%{Warn}% &c&l%arg-1% &7Fué desilenciado de Helpop &7Por &b%player%&7." to loop-player
 				else:
-					send ""
 					send "%{Warn}% &c&l%arg-1% &ano esta Silenciado de Helpop."
-					send ""
 					stop
 			else:
 				send "%{Warn}% &b/hunmute <usuario>."
 				stop
 		else:
 			send "%{Warn}% &cNo tienes permisos para usar este comando."
-			stop		
-			
-# Información del mute dado | #! NO MODIFICAR!
+			stop
 command /htiempo [<offline player>]:
 	aliases: htime
 	trigger:
-		if player has permission "essentials.helpopp.recive":
+		if player has permission "essentials.helpop.recive":
 			if arg 1 is set:
 				if {HMute::%arg-1%} is set:
 					set {_time} to "%{HMute::%arg-1%}%"
@@ -373,8 +469,6 @@ command /htiempo [<offline player>]:
 		else:
 			send "%{Warn}% &cNo tienes permisos para usar este comando."
 			stop
-			
-# Chat de Ops | #! NO MODIFICAR!
 command /a [<text>]:
 	trigger:
 		if player has permission {@Permiso-chatadmin}:
@@ -386,8 +480,6 @@ command /a [<text>]:
 			else:
 				send "%{Warn}% &aNecesitas establecer un mensaje!."
 				stop
-				
-# Chat de Moderadores | #! NO MODIFICAR!
 command /mod [<text>]:
 	aliases: fm, md, cm
 	trigger:
@@ -400,12 +492,10 @@ command /mod [<text>]:
 			else:
 				send "%{Warn}% &aNecesitas establecer un mensaje!."
 				stop
-				
-# Comando de Mensaje Privado de [Ayuda de OP] | #! Solo modificar lo señalado.
 command /helpopmsg [<player>] [<text>]:
 	aliases: hmsg, helpopm, hm, h # Si causa conflicto se puede quitar algun ALIAS.
 	trigger:
-		if player has permission "essentials.helpopp.recive":
+		if player has permission "essentials.helpop.recive":
 			if arg 1 is "%player%":
 				send "%{Warn}% &cNo puedes enviarte un mensaje tu solo."
 				stop
@@ -426,7 +516,6 @@ command /helpopmsg [<player>] [<text>]:
 								loop {_Ops::*}:
 									if loop-value-2 is not sender:
 										send "%{HSpy}% &d%player% &5> &9%arg-1% &7> &f%arg-2%" to loop-value-2
-									
 				else:
 					if {Lang} is "En":
 						send "%{Warn}% &cYou need to set a message."
@@ -435,10 +524,10 @@ command /helpopmsg [<player>] [<text>]:
 					stop
 			else:
 				if {Lang} is "En":
-					send "%{Warn}% &cPlayer not found!"
+					send "%{Warn}% &cPlayer not found"
 					send "%{Warn}% &b/h &7<&eUser&7> &7<&eMessage&7>."
 				if {Lang} is "Es":
-					send "%{Warn}% &cJugador no encontrado!"
+					send "%{Warn}% &cJugador no encontrado"
 					send "%{Warn}% &b/h &7<&eUsuario&7> &7<&eMensaje&7>."
 				stop
 		else:
@@ -447,7 +536,6 @@ command /helpopmsg [<player>] [<text>]:
 			if {Lang} is "Es":
 				send "&cNo tienes permisos para usar este comando."
 			stop
-			
 command /helpopmsgspy:
 	aliases: hspy, hmspy
 	trigger:
@@ -465,12 +553,10 @@ command /helpopmsgspy:
 			if {Lang} is "Es":
 				send "%{Pre}%&c&lUps! %{HSpy}% &cDesactivado"
 			stop
-			
-# Bloqueo, accion extra al utilizar /ac | #! ¡CUIDADO!... Muy Delicado.
 on command:
 	if executor is player:
 		if command is equal to "eamsg" or "amsg" or "eac" or "ehelpop" or "ac":
-			if player does not have permission "essentials.helpopp.recive":
+			if player does not have permission "essentials.helpop.recive":
 				cancel event
 				set {_ac} to full command
 				if {_ac} is "ac" or "helpop":
@@ -502,21 +588,14 @@ on command:
 						send "%{Warn}% &cNo puedes usar colores (&) en este comando."
 						stop
 					else:
-						
 						set {_tag} to getTag(player)
 						set {_ac} to capitalation({_ac}, 3)
-						
 						loop all players:
-							if loop-player has permission "essentials.helpopp.recive":
-								
+							if loop-player has permission "essentials.helpop.recive":
 								if {Lang} is "En":
 									send formatted "%{Prefix}%<ttp:&a[Clic] &fGo with &9%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset> <ttp:&2● &a[Clicked] &fMention &9%player%&f by chat staff><sgt:/ac %player% >%{_tag}%<reset> &7» <ttp:&2● &a[Clicked] &fPaste what appears here in your chat><sgt:%{_acUpper}%>&f&l%{_ac}%<reset>" to loop-player
-
 								if {Lang} is "Es":
-
 									send formatted "%{Prefix}%<ttp:&a[Clic] &fPara ir con &9%player%><cmd:/tp %player%>&7[&6&lTP&7]<reset> <ttp:&a[Clic] &fMenciona por chat staff a &9%player%><sgt:/ac %player% >%{_tag}%<reset> &7» <ttp:&a[Clic] &fPega en tu chat lo que aparece aquí><sgt:%{_ac}%>&f&l%{_ac}%<reset>" to loop-player
-								
-# Evenco de los canales de Chat | #! Modificar de ser necesario!
 on chat:
 	if {staffchat::%player%} is set:
 		cancel event
@@ -530,8 +609,6 @@ on chat:
 		cancel event
 		execute player command "a %message%"
 		stop
-		
-# Cooldown global | #!No modificar!
 every 1 seconds:
 	loop all players:
 		if loop-player is online:
@@ -541,8 +618,6 @@ every 1 seconds:
 					delete {Mutearg3::%loop-player%}
 				if {HMute::%loop-player%} >= 2 second:
 					remove 1 second from {HMute::%loop-player%}
-					
-# Auto vanish | #!Solo OPs
 on join:
 	if player has permission "sv.auto":
 		wait 5 ticks
