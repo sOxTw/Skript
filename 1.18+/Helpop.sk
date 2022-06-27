@@ -20,6 +20,9 @@
 #! helpopsk.chat.op # It is responsible for notifying those who have said permission when a ADMIN/OP uses the /op <message> command.
 #! helpopsk.chat.mod # It is responsible for notifying those who have said permission when a STAFF uses the /mod <message> command.
 #! .-.-.-.-.-.-.-.-.-.-.-. ----------- .-.-.-.-.-.-.-.-.-.-.-.
+# on load:
+# 	delete {HMute::*}
+# 	delete {MuteNamed::*}
 
 options:
 	# Permisos:
@@ -226,7 +229,7 @@ function helpopGetSetInfo(p:player, user: offline player, langOpt: text):
 		set {_loreOfItem07} to "%{_getMuted}%"
 		set {_nameOfItem08} to "&a✔ Desilenciar"
 		set {_nameOfItem08.2} to "&c✖ Desilenciar"
-		set {_getSilens} to modifyTime("%{HMute::%{_user}%}%")
+		set {_getSilens} to modifyTime("%{HMute::%{_user}'s uuid%}%")
 		set {_loreOfItem08} to "%nl%&7→ Remover silencio %nl%&7para %{_user}%&7.%nl%%nl%&b⁃❱ Motivo: &e&o%{_SplitReason::1}%%nl%&b⌚ Fecha:&e&o%{_SplitReason::2}%%nl%&b- Tiempo restante: &e&o%{_getSilens}%"
 		set {_loreOfItem08.2} to "&a&n%{_user}%&a no esta silenciado."
 	set {_InvHelpop} to a new chest inventory with 1 row with name "%{nameOfInventory}%"
@@ -238,9 +241,9 @@ function helpopGetSetInfo(p:player, user: offline player, langOpt: text):
 	set slot 4 of {_InvHelpop} to purple stained glass pane named "%{_nameOfItem05}%" with lore "%{_loreOfItem05}%"
 	set slot 5 of {_InvHelpop} to red stained glass pane named "%{_nameOfItem06}%" with lore "%{_loreOfItem06}%"
 	set slot 7 of {_InvHelpop} to glowing book named "%{_nameOfItem07}%" with lore "%{_loreOfItem07}%"
-	if {Mutearg3::%{_user}%} is set:
+	if {Mutearg3::%{_user}'s uuid%} is set:
 		set slot 8 of {_InvHelpop} to glowing gray dye named "%{_nameOfItem08}%" with lore "%{_loreOfItem08}%"
-	if {Mutearg3::%{_user}%} is not set:
+	if {Mutearg3::%{_user}'s uuid%} is not set:
 		set slot 8 of {_InvHelpop} to gray dye named "%{_nameOfItem08.2}%" with lore "%{_loreOfItem08.2}%"
 	open {_InvHelpop} to {_p}
 function StoryInv(p: player, user: text):
@@ -317,13 +320,12 @@ function UsersMuted(p: player):
 	wait 5 ticks
 	set {_index} to 0
 	loop {_Keys::*}:
-		set {_getID} to "%loop-value%" parsed as offline player's uuid
-		set {_setNamePlayer} to {_getID} parsed as offline players
-		if {HMute::%{_setNamePlayer}%} is set:
-			set {_LoreTime} to modifyTime("%{HMute::%{_setNamePlayer}%}%")
-			set {_LoreData} to {Mutearg3::%{_setNamePlayer}%}
+		set {_getID} to loop-value parsed as offline player's uuid
+		if {HMute::%{_getID}%} is set:
+			set {_LoreTime} to modifyTime("%{HMute::%{_getID}%}%")
+			set {_LoreData} to {Mutearg3::%{_getID}%}
 			set {_Details} to "%nl%&2⌚ &a&n%{_LoreTime}%%nl%%nl%&3&l❱ &b%{_LoreData}%"
-			set slot {_index} of {_InvGetMuteds} to ("%{_setNamePlayer}%" parsed as offline player)'s skull named "&e&l%{_setNamePlayer}%" with lore "%{_Details}%"
+			set slot {_index} of {_InvGetMuteds} to ("%{MuteNamed::%{_getID}%}%" parsed as offline player)'s skull named "&e&l%{MuteNamed::%{_getID}%}%" with lore "%{_Details}%"
 			add 1 to {_index}
 	open {_InvGetMuteds} to {_p}
 function replaceClicked(t: text, n: number) :: text:
@@ -425,7 +427,7 @@ on inventory click:
 			StoryInv(player, {_name})
 		if index of event-slot = 8:
 			set {_name} to replaceClicked("%{_userl}%", 6)
-			if {Mutearg3::%{_name}%} is not set:
+			if {Mutearg3::%{_name}%'s uuid} is not set:
 				cancel event
 			else:
 				set {_name} to replaceClicked("%{_userl}%", 6)
@@ -454,10 +456,10 @@ command /helpop [<text>]:
 					set {_time} to modifyTime("%{HMute::%player%}%")
 					if {Lang} is "En":
 						send "" and "%{Warn}% &cYou are muted from Helpop for: &d%{_time}%"
-						send "%{Warn}% &cReason: &6&l%{Mutearg3::%player%}%" and ""
+						send "%{Warn}% &cReason: &6&l%{Mutearg3::%player's uuid%}%" and ""
 					if {Lang} is "Es":
 						send "" and "%{Warn}% &cEstas silenciado de Helpop por: &d%{_time}%"
-						send "%{Warn}% &cMotivo: &6&l%{Mutearg3::%player%}%" and ""
+						send "%{Warn}% &cMotivo: &6&l%{Mutearg3::%player's uuid%}%" and ""
 					stop
 			else:
 				set {_waited} to difference between {mute.%player%.lastused} and now
@@ -475,7 +477,7 @@ command /helpop [<text>]:
 					send "" and "%{Warn}% &6El staff ya fue notificado con tu consulta o reporte." and ""
 				loop all players:
 					if loop-player has permission "essentials.helpop.recive":
-						delete {HMute::%player%} and {Mutearg3::%player%}
+						delete {HMute::%player%} and {Mutearg3::%player's uuid%}
 						set {_tag} to getTag(player)
 						set {_message} to capitalation(arg 1, 0)
 						set {mute.%player%.lastused} to now
@@ -493,6 +495,7 @@ command /advhelpop [<offline player>]:
 			if arg 1 is set:
 				helpopGetSetInfo(player, arg 1, {Lang})
 			else:
+				helpopGetSetInfo({_none}, arg 1, {Lang})
 				UsersMuted(player)
 command /hmute [<offline player>] [<text>] [<text>]:
 	trigger:
@@ -501,24 +504,25 @@ command /hmute [<offline player>] [<text>] [<text>]:
 			if arg 1 is set:
 				if arg 2 is set:
 					set {mute.%arg 1%.lastused} to now
-					delete {Mutearg3::%arg 1%}
+					delete {Mutearg3::%arg 1's uuid%}
 					set {_arg2} to arg 2
-					set {Mutearg3::%arg 1%} to capitalation(arg 3, 0)
+					set {Mutearg3::%arg 1's uuid%} to capitalation(arg 3, 0)
+					set {MuteNamed::%arg 1's uuid%} to arg 1
 					if {_arg2} is set:
 						set {_clearData} to setTime({_arg2})
 						set {_setData} to modifyTime({_clearData})
-						set {HMute::%arg 1%} to {_clearData} parsed as timespan
+						set {HMute::%arg 1's uuid%} to {_clearData} parsed as timespan
 						if {Lang} is "En":
-							send "%{Warn}% &a%player% &7You have been silenced by %{Prefix}% &7for &e&l%{_setData}%. &7Reason: &c&l%{Mutearg3::%arg 1%}%" to arg 1
+							send "%{Warn}% &a%player% &7You have been silenced by %{Prefix}% &7for &e&l%{_setData}%. &7Reason: &c&l%{Mutearg3::%arg 1's uuid%}%" to arg 1
 						if {Lang} is "Es":
-							send "%{Warn}% &a%player% &7Te ha silenciado de %{Prefix}% &7por &e&l%{_setData}%. &7Motivo: &c&l%{Mutearg3::%arg 1%}%" to arg 1
-						add "%{Mutearg3::%arg 1%}% - %now%" to yaml list "Users.%arg 1's uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
+							send "%{Warn}% &a%player% &7Te ha silenciado de %{Prefix}% &7por &e&l%{_setData}%. &7Motivo: &c&l%{Mutearg3::%arg 1's uuid%}%" to arg 1
+						add "%{Mutearg3::%arg 1's uuid%}% - %now%" to yaml list "Users.%arg 1's uuid%" from "plugins/HelpopSk/MuteData/Users.yml"
 						loop all players:
 							if loop-player has permission "essentials.helpop.recive":
 								if {Lang} is "En":
-									send formatted "%{Warn}% &c&l%player% &fsilence to &6%arg 1% &fof %{Prefix}% &ffor &a%{Mutearg3::%arg 1%}%" to loop-player
+									send formatted "%{Warn}% &c&l%player% &fsilence to &6%arg 1% &fof %{Prefix}% &ffor &a%{Mutearg3::%arg 1's uuid%}%" to loop-player
 								if {Lang} is "Es":
-									send formatted "%{Warn}% &c&l%player% &fsilencio a &6%arg 1% &fde %{Prefix}% &fpor &a%{Mutearg3::%arg 1%}%" to loop-player
+									send formatted "%{Warn}% &c&l%player% &fsilencio a &6%arg 1% &fde %{Prefix}% &fpor &a%{Mutearg3::%arg 1's uuid%}%" to loop-player
 					else:
 						if {Lang} is "En":
 							send "%{Warn}% &e/hmute &7<&eUser&7> &7<&eTime&7> &7[&eReason&7]."
@@ -550,24 +554,24 @@ command /hunmute [<offline player>]:
 	trigger:
 		if player has permission "essentials.helpop.recive":
 			if arg 1 is set:
-				if {HMute::%arg-1%} is set:
-					delete {HMute::%arg-1%} and {Mutearg3::%arg 1%}
-					set {mute.%arg-1%.lastused} to now
+				if {HMute::%arg 1's uuid%} is set:
+					delete {HMute::%arg 1's uuid%} and {Mutearg3::%arg 1's uuid%}
+					set {mute.%arg 1%.lastused} to now
 					if {Lang} is "En":
-						send "%{Warn}% &c&l%arg-1% &eyou have been Unmuted by Helpop!." to arg 1
+						send "%{Warn}% &c&l%arg 1% &eyou have been Unmuted by Helpop!." to arg 1
 					if {Lang} is "Es":
-						send "%{Warn}% &c&l%arg-1% &ehaz sido Desilenciado de Helpop!." to arg 1
+						send "%{Warn}% &c&l%arg 1% &ehaz sido Desilenciado de Helpop!." to arg 1
 					loop all players:
 						if loop-player has permission "essentials.helpop.recive":
 							if {Lang} is "En":
-								send "%{Warn}% &c&l%arg-1% He was unmuted from Helpop for &b%player%&7." to loop-player
+								send "%{Warn}% &c&l%arg 1% He was unmuted from Helpop for &b%player%&7." to loop-player
 							if {Lang} is "Es":
-								send "%{Warn}% &c&l%arg-1% &7Fué desilenciado de Helpop &7por &b%player%&7." to loop-player
+								send "%{Warn}% &c&l%arg 1% &7Fué desilenciado de Helpop &7por &b%player%&7." to loop-player
 				else:
 					if {Lang} is "En":
-						send "%{Warn}% &c&l%arg-1% &aIt's not muted by helpop."
+						send "%{Warn}% &c&l%arg 1% &aIt's not muted by helpop."
 					if {Lang} is "Es":
-						send "%{Warn}% &c&l%arg-1% &ano esta Silenciado de Helpop."
+						send "%{Warn}% &c&l%arg 1% &ano esta Silenciado de Helpop."
 					stop
 			else:
 				if {Lang} is "En":
