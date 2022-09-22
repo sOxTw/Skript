@@ -1,0 +1,86 @@
+options:
+    Icon: &6•&e•&a● &7&lIP&8 ►
+    Header: &6•&e•&a● &8◄ &7&lRangeOfIP&8 ► &a●&e•&6•
+    Footer: &d•&c•&4● &8◄ &bSi crees que es un error, avisa a un staff &8 ► &4●&c•&d•
+
+on load:
+    set {nameOfSkript} to script
+
+function searchIP(list: objects, check: text) :: boolean:
+    loop {_list::*}:
+        if "%loop-value%" is {_check}:
+            return true
+    return false
+
+function newIP(list: objects, start: number, end: number) :: text:
+    set {_size} to size of {_list::*}
+    if {_size} = 4:
+        remove {_list::%{_size}%} from {_list::*}
+        remove 1 from {_size}
+    loop {_list::*}:
+        if {_objectValue} is set:
+            if {_size} = 2:
+                set {_objectValue} to "%{_objectValue}%%loop-value%"
+            if {_size} = 3:
+                if {_check} is not set:
+                    set {_check} to true
+                    set {_objectValue} to "%{_objectValue}%%loop-value%-"
+                else:
+                    set {_objectValue} to "%{_objectValue}%%loop-value%"
+
+        if {_objectValue} is not set:
+            set {_objectValue} to "%loop-value%-"
+    if {_size} >= 3:
+        set {_objectValue} to "%{_objectValue}%"
+    if {_size} = 2:
+        set {_objectValue} to "%{_objectValue}%"
+    loop {_end} times:
+        if {_start} < ({_end} +1):
+            set {_numberResult} to ":%{_start}%"
+            broadcast "%{_objectValue}%%{_numberResult}%"
+            add "%{_objectValue}%%{_numberResult}%" to yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+            add 1 to {_start}
+    return "%{_objectValue}%"
+
+function getIP(action: text, ip: text) :: text:
+    if {_action} is "CHECK":
+        set {_verifyIP::*} to {_ip} split at ":" # Separa la IP del rango a bloquear.
+        set {_ip} to {_verifyIP::1} # Guarda la IP completa.
+        set {_splitIP::*} to {_verifyIP::1} split at "." # Separa la IP en los puntos.
+        set {_rangeIP::*} to {_verifyIP::2} split at "/" # Separa los dos limites de rango.
+        set {_startRangeIP} to ({_rangeIP::1} parsed as number)
+        set {_endRangeIP} to ({_rangeIP::2}  parsed as number)
+        replace "." with "-" in {_ip} # Reelmpaza los . por - en la IP final.
+        set {_size} to size of {_splitIP::*} # Necesario para verificar lo largo de la IP.
+        set {_newIP} to newIP({_splitIP::*}, {_startRangeIP}, {_endRangeIP})
+
+        return {_newIP}
+
+function checkIP(ips: text, p: player) :: text:
+    set {_list::*} to yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+    if searchIP({_list::*}, "%{_ips}%") is true:
+        wait 1 tick
+        replace all "-" and ":" with "." in {_ips}
+        kick {_p} due to "{@Header}%nl%%nl%&e&l&n%{_p}%&r%nl%%nl%&7Estas intentando ingresar pero estas dentro%nl%&7del rango de una &f&nIP BLOQUEADA&7.%nl%%nl%{@Icon} &c%{_ips}%%nl%%nl%{@Footer}"
+        
+
+on join:
+    set {_ip} to ip of player
+    replace first "." with "-" in {_ip}
+    replace first "." with "-" in {_ip}
+    replace first "." with ":" in {_ip}
+    checkIP({_ip}, player)
+
+
+command /rangeofip [<text>] [<text>]:
+    aliases: roi, rip, range, ip
+    # permission: rip.range.add
+    # permission message: {@Icon} &fNo puedes utilizar este comando. Comunicate con un administrador si crees que es un error. <ttp:&6Se requiere el permiso mencionado.>&8[&cError: &7rip.range.add&8]<reset>
+    trigger:
+        if arg 1 is "add" or "create" or "crear" or "agregar":
+            set {_newIP} to getIP("CHECK", arg 2)
+            send "{@Icon} &d%{_newIP}%"
+
+
+        if arg 1 is "reload":
+            execute player command "sk reload %{nameOfSkript}%.sk"
