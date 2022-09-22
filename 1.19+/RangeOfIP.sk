@@ -44,24 +44,28 @@ function newIP(list: objects, start: number, end: number) :: text:
 
 function getIP(action: text, ip: text) :: text:
     if {_action} is "CHECK":
-        set {_verifyIP::*} to {_ip} split at ":" # Separa la IP del rango a bloquear.
-        set {_ip} to {_verifyIP::1} # Guarda la IP completa.
-        set {_splitIP::*} to {_verifyIP::1} split at "." # Separa la IP en los puntos.
-        set {_rangeIP::*} to {_verifyIP::2} split at "/" # Separa los dos limites de rango.
+        set {_verifyIP::*} to {_ip} split at ":"
+        set {_ip} to {_verifyIP::1}
+        set {_splitIP::*} to {_verifyIP::1} split at "."
+        set {_rangeIP::*} to {_verifyIP::2} split at "/"
         set {_startRangeIP} to ({_rangeIP::1} parsed as number)
         set {_endRangeIP} to ({_rangeIP::2}  parsed as number)
-        replace "." with "-" in {_ip} # Reelmpaza los . por - en la IP final.
-        set {_size} to size of {_splitIP::*} # Necesario para verificar lo largo de la IP.
+        replace "." with "-" in {_ip}
+        set {_size} to size of {_splitIP::*}
         set {_newIP} to newIP({_splitIP::*}, {_startRangeIP}, {_endRangeIP})
 
         return {_newIP}
 
-function checkIP(ips: text, p: player) :: text:
+function checkIP(use: text, ips: text, p: player) :: text:
     set {_list::*} to yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
     if searchIP({_list::*}, "%{_ips}%") is true:
-        wait 1 tick
-        replace all "-" and ":" with "." in {_ips}
-        kick {_p} due to "{@Header}%nl%%nl%&e&l&n%{_p}%&r%nl%%nl%&7Estas intentando ingresar pero estas dentro%nl%&7del rango de una &f&nIP BLOQUEADA&7.%nl%%nl%{@Icon} &c%{_ips}%%nl%%nl%{@Footer}"
+
+        if {_use} is "REMOVE":
+            remove {_ips} from yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+        if {_use} is "JOIN":
+            wait 1 tick
+            replace all "-" and ":" with "." in {_ips}
+            kick {_p} due to "{@Header}%nl%%nl%&e&l&n%{_p}%&r%nl%%nl%&7Estas intentando ingresar pero estas dentro%nl%&7del rango de una &f&nIP BLOQUEADA&7.%nl%%nl%{@Icon} &c%{_ips}%%nl%%nl%{@Footer}%nl%%nl%&4☢ &nComparte esta informacion solo con el staff del servidor&r &4☢"
         
 
 on join:
@@ -69,17 +73,70 @@ on join:
     replace first "." with "-" in {_ip}
     replace first "." with "-" in {_ip}
     replace first "." with ":" in {_ip}
-    checkIP({_ip}, player)
+    checkIP("JOIN", {_ip}, player)
 
 
 command /rangeofip [<text>] [<text>]:
     aliases: roi, rip, range, ip
-    # permission: rip.range.add
-    # permission message: {@Icon} &fNo puedes utilizar este comando. Comunicate con un administrador si crees que es un error. <ttp:&6Se requiere el permiso mencionado.>&8[&cError: &7rip.range.add&8]<reset>
+    permission: rip.range.
+    permission message: {@Icon} &fNo puedes utilizar este comando. Comunicate con un administrador si crees que es un error. <ttp:&6Se requiere el permiso mencionado.>&8[&cError: &7rip.range.add&8]<reset>
     trigger:
-        if arg 1 is "add" or "create" or "crear" or "agregar":
+        if arg 1 is "add" or "create":
             set {_newIP} to getIP("CHECK", arg 2)
-            send "{@Icon} &d%{_newIP}%"
+            send "{@Icon} &7Se agrego &d%{_newIP}% &7al bloqueo de ingreso al servidor."
+
+        if arg 1 is "del" or "remove":
+            set {_ip} to arg 2
+            replace first "." with "-" in {_ip}
+            replace first "." with "-" in {_ip}
+            replace first "." with ":" in {_ip}
+            checkIP("REMOVE", {_ip}, player)
+            send "{@Icon} &7Se elimino &d%{_ip}% &7al bloqueo de ingreso al servidor."
+
+        if arg 1 is "delfrom" or "removefrom":
+            set {_ip} to arg 2
+            replace first "." with "-" in {_ip}
+            replace first "." with "-" in {_ip}
+            replace first "." with ":" in {_ip}
+            replace first "-" with "." in {_ip}
+            replace first "-" with "." in {_ip}
+            set {_range::*} to {_ip} split at ":"
+            set {_loops::*} to {_range::2} split at "/"
+            replace first "." with "-" in {_range::1}
+            replace first "." with "-" in {_range::1}
+            set {_start} to ({_loops::1} parsed as number)
+            set {_times} to ({_loops::1} parsed as number)
+            set {_end} to ({_loops::2} parsed as number)
+            loop 255 times:
+                set {_list::*} to yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+                if searchIP({_list::*}, "%{_range::1}%:%{_times}%") is true:
+                    if {_times} <= {_end}:
+                        remove "%{_range::1}%:%{_times}%" from yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+                        add 1 to {_times}
+                if searchIP({_list::*}, "%{_range::1}%:%{_times}%") is false:
+                    add 1 to {_times}
+            send "{@Icon} &7Se elimino &d%{_range::1}%:%{_start}%/%{_end}% &7al bloqueo de ingreso al servidor."
+
+        if arg 1 is "delall" or "removeall":
+            set {_ip} to arg 2
+            replace first "." with "-" in {_ip}
+            replace first "." with "-" in {_ip}
+            replace first "." with ":" in {_ip}
+            replace first "-" with "." in {_ip}
+            replace first "-" with "." in {_ip}
+            set {_range::*} to {_ip} split at ":"
+            set {_loops::*} to {_range::2} split at "/"
+            replace first "." with "-" in {_range::1}
+            replace first "." with "-" in {_range::1}
+            set {_times} to 0
+            loop 255 times:
+                set {_list::*} to yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+                if searchIP({_list::*}, "%{_range::1}%:%{_times}%") is true:
+                    remove "%{_range::1}%:%{_times}%" from yaml list "IpsBlock" from "plugins/RangeOfIP/data/blockip.yml"
+                    add 1 to {_times}
+                if searchIP({_list::*}, "%{_range::1}%:%{_times}%") is false:
+                    add 1 to {_times}
+            send "{@Icon} &7Se elimino &d%{_range::1}%:0/255 &7al bloqueo de ingreso al servidor."
 
 
         if arg 1 is "reload":
